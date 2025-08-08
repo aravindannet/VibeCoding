@@ -6,145 +6,39 @@ import {
   useSensor,
   useSensors,
   DragOverlay,
-  useDroppable,
 } from "@dnd-kit/core";
-import { SortableContext, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { v4 as uuidv4 } from "uuid";
 import { motion } from "framer-motion";
 import {
   CalendarDays,
   CheckCircle2,
   Plus,
-  Link as LinkIcon,
-  ExternalLink,
   Search,
   PlugZap,
   Trash2,
-  MoveRight,
   AlertTriangle,
   Loader2,
   Moon,
   Sun,
-  User as UserIcon,
+  ExternalLink,
 } from "lucide-react";
+import AddTaskDialog from "./dialogs/AddTaskDialog";
+import JiraDialog from "./dialogs/JiraDialog";
+import Card from "./components/Card";
+import Badge from "./components/Badge";
+import Button from "./components/Button";
+import PrimaryButton from "./components/PrimaryButton";
+import Input from "./components/Input";
+import Textarea from "./components/Textarea";
+import DroppableColumn from "./components/DroppableColumn";
+import SortableTask from "./components/SortableTask";
+import Column from "./components/Column";
+import Sheet from "./dialogs/Sheet";
+import Dialog from "./dialogs/Dialog";
+import { Status, Priority, Task } from "./utils/types";
 
 
-
-type Status = "todo" | "inprogress" | "blocker" | "done";
-type Priority = "Low" | "Medium" | "High";
-type Task = {
-  id: string;
-  name: string;
-  owner?: string;
-  description?: string;
-  startDate?: string;
-  endDate?: string;
-  jiraKey?: string | null;
-  jiraBaseUrl?: string | null;
-  status: Status;
-  priority?: Priority;
-};
-
-const baseBtn =
-  "inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm shadow-sm transition active:scale-[.98] border";
-const Button = ({ className = "", children, ...props }: any) => (
-  <button
-    className={`${baseBtn} bg-zinc-100 border-zinc-300 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-700 ${className}`}
-    {...props}
-  >
-    {children}
-  </button>
-);
-const PrimaryButton = ({ className = "", children, ...props }: any) => (
-  <button
-    className={`${baseBtn} border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700 dark:border-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400 ${className}`}
-    {...props}
-  >
-    {children}
-  </button>
-);
-const Input = (props: any) => (
-  <input
-    {...props}
-    className={`w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 ${
-      props.className || ""
-    }`}
-  />
-);
-const Textarea = (props: any) => (
-  <textarea
-    {...props}
-    className={`w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 ${
-      props.className || ""
-    }`}
-  />
-);
-const Badge = ({ children, className = "", ...rest }: any) => (
-  <span
-    {...rest}
-    className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium dark:text-zinc-100 dark:border-zinc-600 ${className}`}
-  >
-    {children}
-  </span>
-);
-const Card = ({ children, className = "", ...rest }: any) => (
-  <div
-    {...rest}
-    className={`rounded-2xl border backdrop-blur-2xl p-4 shadow-2xl dark:bg-zinc-900/40 dark:border-zinc-700/40 dark:backdrop-blur-md ${className}`}
-    style={{
-      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
-      border: '1px solid rgba(255,255,255,0.25)',
-      background: 'linear-gradient(135deg, rgba(255,255,255,0.12) 60%, rgba(245,245,255,0.04) 100%)',
-      backdropFilter: 'blur(24px)',
-    }}
-  >
-    {children}
-  </div>
-);
-const Sheet = ({ open, onClose, title, children }: any) => (
-  <div className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
-    <div
-      className={`absolute inset-0 bg-black/40 transition-opacity ${open ? "opacity-100" : "opacity-0"}`}
-      onClick={onClose}
-    />
-    <div
-      className={`absolute right-0 top-0 h-full w-full max-w-md bg-white/30 backdrop-blur-md shadow-2xl transition-transform dark:bg-zinc-950/40 dark:backdrop-blur-md ${
-        open ? "translate-x-0" : "translate-x-full"
-      }`}
-        style={{
-          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
-          border: '1px solid rgba(255,255,255,0.35)',
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.45) 60%, rgba(245,245,255,0.25) 100%)',
-          backdropFilter: 'blur(18px)',
-        }}
-    >
-      <div className="flex items-center justify-between border-b border-white/30 dark:border-zinc-800/40 p-4">
-        <h3 className="text-lg font-semibold dark:text-zinc-100">{title}</h3>
-        <Button onClick={onClose} className="!rounded-full px-2 py-1">✕</Button>
-      </div>
-      <div className="overflow-y-auto p-4">{children}</div>
-    </div>
-  </div>
-);
-const Dialog = ({ open, onClose, title, children }: any) => (
-  <div className={`fixed inset-0 z-50 ${open ? "" : "hidden"}`}>
-    <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-    <div className="absolute left-1/2 top-1/2 w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white/30 backdrop-blur-md shadow-2xl dark:bg-zinc-950/40 dark:backdrop-blur-md"
-        style={{
-          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
-          border: '1px solid rgba(255,255,255,0.35)',
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.45) 60%, rgba(245,245,255,0.25) 100%)',
-          backdropFilter: 'blur(18px)',
-        }}>
-      <div className="flex items-center justify-between border-b border-white/30 dark:border-zinc-800/40 p-4">
-        <h3 className="text-lg font-semibold dark:text-zinc-100">{title}</h3>
-        <Button onClick={onClose} className="!rounded-full px-2 py-1">✕</Button>
-      </div>
-      <div className="p-4">{children}</div>
-    </div>
-  </div>
-);
 
 const COLUMNS = [
   {
@@ -173,128 +67,7 @@ const COLUMNS = [
   },
 ] as const;
 
-function DroppableColumn({ id, children, className = "" }: any) {
-  const { setNodeRef, isOver } = useDroppable({ id });
-  return (
-    <div
-      ref={setNodeRef}
-      className={`${className} ${isOver ? "ring-2 ring-indigo-400" : ""}`}
-    >
-      {children}
-    </div>
-  );
-}
-
-function SortableTask({ task, onInspect, onDelete, dragOverlay = false }: any) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
-  const isOverlay = dragOverlay === true;
-  const style = isOverlay
-    ? undefined
-    : {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
-        scale: isDragging ? 0.97 : 1,
-        zIndex: isDragging ? 1 : 0,
-      };
-  return (
-    <motion.div
-      layout
-      style={style}
-      initial={isOverlay ? { scale: 0.95, opacity: 0.8, boxShadow: '0 8px 32px 0 rgba(31,38,135,0.25)' } : false}
-      animate={isOverlay ? { scale: 1.05, opacity: 1, boxShadow: '0 16px 48px 0 rgba(31,38,135,0.25)' } : false}
-      transition={isOverlay ? { type: 'spring', stiffness: 350, damping: 30 } : {}}
-    >
-      <div ref={isOverlay ? undefined : setNodeRef} {...(isOverlay ? {} : attributes)} {...(isOverlay ? {} : listeners)}>
-        <Card className={`mb-3 cursor-grab active:cursor-grabbing ${isDragging || isOverlay ? "ring-2 ring-indigo-400" : ""}`}>
-          <div className="flex items-start justify-between">
-            <div className="min-w-0">
-              {task.owner && (
-                <div className="mb-1 inline-flex items-center gap-2 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200">
-                  <UserIcon className="h-3 w-3" /> {task.owner}
-                </div>
-              )}
-              <div className="truncate text-base font-extrabold leading-tight dark:text-zinc-100">{task.name}</div>
-              {task.description && (
-                <div className="mt-1 line-clamp-2 text-xs text-zinc-600 dark:text-zinc-400">{task.description}</div>
-              )}
-            </div>
-            <div className="flex items-center gap-1">
-              {task.jiraKey && (
-                <a
-                  href={task.jiraBaseUrl ? `${task.jiraBaseUrl.replace(/\/$/, "")}/browse/${task.jiraKey}` : `#`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group"
-                  title="Open in Jira"
-                >
-                  <Badge className="border-indigo-300 text-indigo-700 bg-indigo-50 group-hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700"><LinkIcon className="h-3 w-3" /> {task.jiraKey}</Badge>
-                </a>
-              )}
-              <Button className="!rounded-full px-2 py-1" title="Details" onClick={() => onInspect(task)}>
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-              <Button className="!rounded-full px-2 py-1" title="Delete" onClick={() => onDelete(task.id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-            <Badge className="border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600">Start: {task.startDate || "—"}</Badge>
-            <MoveRight className="h-3 w-3 text-zinc-400" />
-            <Badge className="border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600">End: {task.endDate || "—"}</Badge>
-            {task.priority && (
-              <Badge
-                className={`border-transparent ${{
-                  High: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200",
-                  Medium: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200",
-                  Low: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200",
-                }[task.priority as Priority]}`}
-              >
-                {task.priority}
-              </Badge>
-            )}
-          </div>
-        </Card>
-      </div>
-    </motion.div>
-  );
-}
-
-function Column({ id, title, color, tasks, onInspect, onDelete }: any) {
-  // Flip clock animation for count (applies to all columns)
-  const count = tasks.length;
-  return (
-    <div className="flex h-full min-h-[460px] flex-col">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {/* Only one status indicator per column */}
-          <div
-            className={`h-3 w-3 rounded-full ${id === "todo" ? "bg-zinc-400" : id === "inprogress" ? "bg-amber-500" : id === "done" ? "bg-emerald-500" : "bg-rose-500"}`}
-          />
-          <h3 className="text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-200">{title}</h3>
-          <motion.div
-            key={count}
-            initial={{ rotateX: 90, opacity: 0 }}
-            animate={{ rotateX: 0, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-indigo-600 dark:text-indigo-300 font-extrabold text-4xl px-4 py-2 rounded-xl shadow-lg flex items-center justify-center"
-            style={{ perspective: 400 }}
-          >
-            {count}
-          </motion.div>
-        </div>
-      </div>
-      <DroppableColumn id={id} className={`flex-1 rounded-2xl border border-dashed ${color} p-3 dark:border-zinc-700`}>
-        <SortableContext items={tasks.map((t: Task) => t.id)} strategy={rectSortingStrategy}>
-          {tasks.map((task: Task) => (
-            <SortableTask key={task.id} task={task} onInspect={onInspect} onDelete={onDelete} />
-          ))}
-        </SortableContext>
-      </DroppableColumn>
-    </div>
-  );
-}
+// ...existing code...
 
 export default function App() {
   const [dark, setDark] = useState(() => {
@@ -362,107 +135,7 @@ export default function App() {
   const onDelete = (id: string) => setTasks((prev) => prev.filter((t) => t.id !== id));
   const addTask = (task: Task) => setTasks((prev) => [{ ...task }, ...prev]);
 
-  function AddTaskDialog() {
-    const [name, setName] = useState("");
-    const [owner, setOwner] = useState("");
-    const [description, setDescription] = useState("");
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
-    const [jiraKey, setJiraKey] = useState("");
-    const [priority, setPriority] = useState<Priority>("Medium");
-
-    const submit = (e: any) => {
-      e.preventDefault();
-      const id = uuidv4();
-      addTask({ id, name, owner, description, startDate, endDate, jiraKey: jiraKey || null, jiraBaseUrl: jiraBaseUrl || null, status: "todo", priority });
-      setAddOpen(false);
-    };
-
-    return (
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)} title="Add Task">
-        <form onSubmit={submit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Task name</label>
-              <Input required placeholder="e.g., Implement login API" value={name} onChange={(e: any) => setName(e.target.value)} />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Owner</label>
-              <Input placeholder="e.g., Keerthana" value={owner} onChange={(e: any) => setOwner(e.target.value)} />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Description</label>
-            <Textarea rows={3} placeholder="Optional details" value={description} onChange={(e: any) => setDescription(e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Start date</label>
-              <Input type="date" value={startDate} onChange={(e: any) => setStartDate(e.target.value)} />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">End date</label>
-              <Input type="date" value={endDate} onChange={(e: any) => setEndDate(e.target.value)} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Jira issue key (optional)</label>
-              <Input placeholder="e.g., ABC-123" value={jiraKey} onChange={(e: any) => setJiraKey(e.target.value.toUpperCase())} />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Priority</label>
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value as Priority)}
-                className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100"
-              >
-                <option>Low</option>
-                <option>Medium</option>
-                <option>High</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <PrimaryButton type="submit"><Plus className="h-4 w-4" /> Save Task</PrimaryButton>
-          </div>
-        </form>
-      </Dialog>
-    );
-  }
-
-  function JiraDialog() {
-    const [base, setBase] = useState(jiraBaseUrl);
-    const [token, setToken] = useState("");
-
-    const save = (e: any) => {
-      e.preventDefault();
-      setJiraBaseUrl(base);
-      setJiraConnected(true);
-      setJiraOpen(false);
-    };
-
-    return (
-      <Dialog open={jiraOpen} onClose={() => setJiraOpen(false)} title="Connect to Jira (demo)">
-        <form onSubmit={save} className="space-y-3">
-          <div className="text-sm text-zinc-600 dark:text-zinc-400">Store your Jira base URL so issue keys link out. API calls are mocked in this demo and not sent anywhere.</div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Jira base URL</label>
-            <Input placeholder="https://your-domain.atlassian.net" value={base} onChange={(e: any) => setBase(e.target.value)} required />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">API token (optional)</label>
-            <Input placeholder="Stored locally only (demo)" value={token} onChange={(e: any) => setToken(e.target.value)} />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" onClick={() => setJiraOpen(false)}>Cancel</Button>
-            <PrimaryButton type="submit"><PlugZap className="h-4 w-4" /> Save</PrimaryButton>
-          </div>
-        </form>
-      </Dialog>
-    );
-  }
+// ...existing code...
 
   const filteredColumns = COLUMNS.map((c) => ({ ...c, tasks: (columns as any)[c.id] as Task[] }));
 
@@ -629,8 +302,19 @@ export default function App() {
             )}
           </Sheet>
 
-          <AddTaskDialog />
-          <JiraDialog />
+          <AddTaskDialog
+            addOpen={addOpen}
+            setAddOpen={setAddOpen}
+            addTask={addTask}
+            jiraBaseUrl={jiraBaseUrl}
+          />
+          <JiraDialog
+            jiraOpen={jiraOpen}
+            setJiraOpen={setJiraOpen}
+            jiraBaseUrl={jiraBaseUrl}
+            setJiraBaseUrl={setJiraBaseUrl}
+            setJiraConnected={setJiraConnected}
+          />
 
           <div className="mt-8 text-center text-xs text-zinc-500 dark:text-zinc-400">
             Drag tasks between columns (including <span className="font-medium">Blocked</span>). Data persists in your browser (localStorage). Now supports Dark Mode 🌙.
