@@ -38,6 +38,8 @@ import Column from "./components/Column";
 import Sheet from "./dialogs/Sheet";
 import Dialog from "./dialogs/Dialog";
 import TableView from "./components/TableView";
+import Logo from "./components/Logo";
+import FloatingDatePicker from "./components/FloatingDatePicker";
 import { Status, Priority, Task } from "./utils/types";
 
 
@@ -87,6 +89,7 @@ export default function App() {
   const [jiraOpen, setJiraOpen] = useState(false);
   const [jiraBaseUrl, setJiraBaseUrl] = useState(() => localStorage.getItem("kanban-jira-base") || "");
   const [jiraConnected, setJiraConnected] = useState(() => !!localStorage.getItem("kanban-jira-base"));
+  const [selectedDate, setSelectedDate] = useState("");
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -115,17 +118,43 @@ export default function App() {
 
   const columns = useMemo(() => {
     const byCol: Record<Status, Task[]> = { todo: [], inprogress: [], blocker: [], done: [] };
-    tasks
-      .filter(
-        (t) =>
-          (userFilter.length > 0 ? userFilter.includes(t.owner) : true) &&
-          (t.name.toLowerCase().includes(query.toLowerCase()) ||
-            (t.jiraKey || "").toLowerCase().includes(query.toLowerCase()) ||
-            (t.owner || "").toLowerCase().includes(query.toLowerCase()))
-      )
-      .forEach((t) => byCol[t.status].push(t as Task));
+    
+    tasks.filter((t) => {
+      // User filter
+      const passesUserFilter = userFilter.length === 0 || userFilter.includes(t.owner);
+      
+      // Search query filter
+      const passesSearchFilter = 
+        query === "" || 
+        t.name.toLowerCase().includes(query.toLowerCase()) ||
+        (t.jiraKey || "").toLowerCase().includes(query.toLowerCase()) ||
+        (t.owner || "").toLowerCase().includes(query.toLowerCase());
+      
+      // Date filter
+      let passesDateFilter = !selectedDate; // If no date selected, show everything
+      if (selectedDate) {
+        if (!t.startDate && !t.endDate) {
+          passesDateFilter = false; // No dates on task, don't show when filtering by date
+        } else {
+          const selectDate = new Date(selectedDate);
+          const startDate = t.startDate ? new Date(t.startDate) : null;
+          const endDate = t.endDate ? new Date(t.endDate) : null;
+          
+          if (startDate && endDate) {
+            passesDateFilter = selectDate >= startDate && selectDate <= endDate;
+          } else if (startDate) {
+            passesDateFilter = selectDate >= startDate;
+          } else if (endDate) {
+            passesDateFilter = selectDate <= endDate;
+          }
+        }
+      }
+      
+      return passesUserFilter && passesSearchFilter && passesDateFilter;
+    }).forEach((t) => byCol[t.status].push(t));
+    
     return byCol;
-  }, [tasks, query, userFilter]);
+  }, [tasks, query, userFilter, selectedDate]);
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
@@ -163,12 +192,14 @@ export default function App() {
         <div className="mx-auto max-w-7xl h-full flex flex-col"> 
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <motion.h1 initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="text-2xl font-bold tracking-tight dark:text-zinc-100">
-                Status Board
-              </motion.h1>
-              <Badge className="border-indigo-300 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700">Kanban • Drag & Drop</Badge>
+              <Logo />
             </div>
             <div className="flex items-center gap-2">
+              <FloatingDatePicker
+                selectedDate={selectedDate}
+                onDateSelect={(date) => setSelectedDate(date)}
+                onClear={() => setSelectedDate("")}
+              />
               <div className="relative">
                 <Search className="pointer-events-none absolute left-2 top-2.5 h-4 w-4 text-zinc-400" />
                 <Input placeholder="Search by task, owner, or JIRA key" className="pl-8" value={query} onChange={(e: any) => setQuery(e.target.value)} />
@@ -187,22 +218,52 @@ export default function App() {
             </div>
           </div>
 
-          {/* Selected users band */}
-          {userFilter.length > 0 && (
-            <div className="mb-4 flex flex-wrap items-center gap-3 px-2 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30">
-              <span className="font-semibold text-indigo-700 dark:text-indigo-200 mr-2">Filtered Users:</span>
-              {userFilter.map(user => (
-                <div key={user} className="flex items-center gap-2 mr-4">
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-500 text-white font-bold text-xs shadow">
-                    {user.split(' ').map(n => n[0]).join('').toUpperCase()}
-                  </span>
-                  <span className="text-sm text-zinc-700 dark:text-zinc-100">{user}</span>
-                </div>
-              ))}
+          {/* Active filters band */}
+          {(userFilter.length > 0 || query || selectedDate) && (
+            <div className="mb-4 flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/30">
+              <div className="flex flex-wrap items-center gap-4">
+                {selectedDate && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-indigo-700 dark:text-indigo-200">📅 Date:</span>
+                    <span className="text-sm text-zinc-700 dark:text-zinc-100">{selectedDate}</span>
+                  </div>
+                )}
+                {userFilter.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-indigo-700 dark:text-indigo-200">👥 Users:</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {userFilter.map(user => (
+                        <span key={user} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-800/50">
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500 text-white font-bold text-xs">
+                            {user.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          </span>
+                          <span className="text-sm text-indigo-700 dark:text-indigo-200">{user}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {query && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-indigo-700 dark:text-indigo-200">🔍 Search:</span>
+                    <span className="text-sm text-zinc-700 dark:text-zinc-100">"{query}"</span>
+                  </div>
+                )}
+              </div>
+              <Button 
+                onClick={() => {
+                  setSelectedDate("");
+                  setQuery("");
+                  setUserFilter([]);
+                }}
+                className="shrink-0 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+              >
+                Reset All Filters
+              </Button>
             </div>
           )}
 
-          {query || userFilter.length > 0 ? (
+          {(query || userFilter.length > 0 || selectedDate) ? (
             <div className="flex-1 overflow-y-auto px-1">
               <TableView
                 tasks={Object.values(columns).flat()} 
