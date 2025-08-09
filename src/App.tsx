@@ -1,77 +1,29 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  DndContext,
-  closestCorners,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragOverlay,
-} from "@dnd-kit/core";
-import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
-import { v4 as uuidv4 } from "uuid";
-import { motion } from "framer-motion";
-import {
-  CalendarDays,
-  CheckCircle2,
-  Plus,
-  Search,
-  PlugZap,
-  Trash2,
-  AlertTriangle,
-  Loader2,
-  Moon,
-  Sun,
-  ExternalLink,
-} from "lucide-react";
+import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import { Status, Task, Priority } from "./utils/types";
 import AddTaskDialog from "./dialogs/AddTaskDialog";
-import UserFilterDropdown from "./components/UserFilterDropdown";
 import JiraDialog from "./dialogs/JiraDialog";
-import Card from "./components/Card";
-import Badge from "./components/Badge";
+import Sheet from "./dialogs/Sheet";
+import Header from "./components/Header";
+import ActiveFilters from "./components/ActiveFilters";
+import TaskBoard from "./components/TaskBoard";
+import { ExternalLink, Trash2, Plus, Sun, Moon, PlugZap, Search } from "lucide-react";
 import Button from "./components/Button";
 import PrimaryButton from "./components/PrimaryButton";
 import Input from "./components/Input";
 import Textarea from "./components/Textarea";
-import DroppableColumn from "./components/DroppableColumn";
-import SortableTask from "./components/SortableTask";
-import Column from "./components/Column";
-import Sheet from "./dialogs/Sheet";
-import Dialog from "./dialogs/Dialog";
-import TableView from "./components/TableView";
 import Logo from "./components/Logo";
+import TableView from "./components/TableView";
 import FloatingDatePicker from "./components/FloatingDatePicker";
-import { Status, Priority, Task } from "./utils/types";
-
-
+import UserFilterDropdown from "./components/UserFilterDropdown";
+import Column from "./components/Column";
 
 const COLUMNS = [
-  {
-    id: "todo",
-    title: "Not Started",
-    color: "bg-gradient-to-b from-indigo-50 via-violet-50 via-purple-50 to-sky-50 dark:from-indigo-900/40 dark:via-violet-900/40 dark:via-purple-900/40 dark:to-sky-900/40",
-    icon: <CalendarDays className="h-4 w-4" />
-  },
-  {
-    id: "inprogress",
-    title: "In Progress",
-    color: "bg-gradient-to-b from-amber-50 via-orange-50 via-yellow-50 to-blue-50 dark:from-amber-900/40 dark:via-orange-900/40 dark:via-yellow-900/40 dark:to-blue-900/40",
-    icon: <Loader2 className="h-4 w-4 animate-spin-slow" />
-  },
-  {
-    id: "blocker",
-    title: "Blocked",
-    color: "bg-gradient-to-b from-rose-50 via-pink-50 via-red-50 to-orange-50 dark:from-rose-900/40 dark:via-pink-900/40 dark:via-red-900/40 dark:to-orange-900/40",
-    icon: <AlertTriangle className="h-4 w-4" />
-  },
-  {
-    id: "done",
-    title: "Done",
-    color: "bg-gradient-to-b from-emerald-50 via-green-50 via-teal-50 to-cyan-50 dark:from-emerald-900/40 dark:via-green-900/40 dark:via-teal-900/40 dark:to-cyan-900/40",
-    icon: <CheckCircle2 className="h-4 w-4" />
-  },
+  { id: "todo", title: "Not Started", color: "zinc" },
+  { id: "inprogress", title: "In Progress", color: "indigo" },
+  { id: "blocker", title: "Blocked", color: "rose" },
+  { id: "done", title: "Done", color: "emerald" },
 ] as const;
-
-// ...existing code...
 
 export default function App() {
   const [dark, setDark] = useState(() => {
