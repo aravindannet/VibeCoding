@@ -82,7 +82,7 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl }: any) => {
     <Dialog open={addOpen} onClose={() => setAddOpen(false)} title="Add Task">
       <form
         onSubmit={submit}
-        className="space-y-3 rounded-2xl border backdrop-blur-2xl p-4 shadow-2xl dark:bg-[#18181b] dark:border-zinc-700/40 dark:backdrop-blur-md bg-[linear-gradient(135deg,rgba(255,255,255,0.12)_60%,rgba(245,245,255,0.04)_100%)]"
+        className="space-y-2 sm:space-y-3 rounded-2xl border backdrop-blur-2xl p-2 sm:p-4 shadow-2xl dark:bg-[#18181b] dark:border-zinc-700/40 dark:backdrop-blur-md bg-[linear-gradient(135deg,rgba(255,255,255,0.12)_60%,rgba(245,245,255,0.04)_100%)]"
         style={{
           boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
           border: '1px solid rgba(255,255,255,0.25)',
@@ -109,23 +109,26 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl }: any) => {
             <button
               ref={dateBtnRef}
               type="button"
-              className="rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-xs sm:text-sm text-zinc-700 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-indigo-500"
               onClick={() => setShowDatePicker(v => !v)}
               style={{ textAlign: 'left' }}
             >
-              {dateRange.startDate.toLocaleDateString()} — {dateRange.endDate.toLocaleDateString()}
+              <span className="block truncate">
+                {dateRange.startDate.toLocaleDateString()} — {dateRange.endDate.toLocaleDateString()}
+              </span>
             </button>
             {showDatePicker && portalRoot && ReactDOM.createPortal(
               <div
                 ref={pickerRef}
-                className="z-[9999] rounded-xl border border-zinc-700 bg-zinc-900 p-2 shadow-lg fixed"
+                className="z-[9999] rounded-xl border border-zinc-700 bg-zinc-900 shadow-lg fixed"
                 style={{
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  width: '90vw',
+                  width: 'calc(100% - 2rem)',
                   maxWidth: '360px',
-                  maxHeight: '90vh',
+                  height: 'auto',
+                  maxHeight: 'calc(100vh - 4rem)',
                   overflowY: 'auto',
                   background: '#18181b',
                   color: '#e0e7ff',
@@ -157,9 +160,9 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl }: any) => {
             <PriorityDropdown value={priority} onChange={v => setPriority(v as Priority)} />
           </div>
         </div>
-        <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" onClick={() => setAddOpen(false)}>Cancel</Button>
-          <PrimaryButton type="submit"><Plus className="h-4 w-4" /> Save Task</PrimaryButton>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+          <Button type="button" onClick={() => setAddOpen(false)} className="w-full sm:w-auto">Cancel</Button>
+          <PrimaryButton type="submit" className="w-full sm:w-auto"><Plus className="h-4 w-4" /> Save Task</PrimaryButton>
         </div>
       </form>
     </Dialog>
