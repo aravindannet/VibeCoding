@@ -1,73 +1,29 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  DndContext,
-  closestCorners,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragOverlay,
-} from "@dnd-kit/core";
-import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
-import { v4 as uuidv4 } from "uuid";
-import { motion } from "framer-motion";
-import {
-  CalendarDays,
-  CheckCircle2,
-  Plus,
-  Search,
-  PlugZap,
-  Trash2,
-  AlertTriangle,
-  Loader2,
-  Moon,
-  Sun,
-  ExternalLink,
-} from "lucide-react";
+import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import { Status, Task, Priority } from "./utils/types";
 import AddTaskDialog from "./dialogs/AddTaskDialog";
 import JiraDialog from "./dialogs/JiraDialog";
-import Card from "./components/Card";
-import Badge from "./components/Badge";
+import Sheet from "./dialogs/Sheet";
+import Header from "./components/Header";
+import ActiveFilters from "./components/ActiveFilters";
+import TaskBoard from "./components/TaskBoard";
+import { ExternalLink, Trash2, Plus, Sun, Moon, PlugZap, Search } from "lucide-react";
 import Button from "./components/Button";
 import PrimaryButton from "./components/PrimaryButton";
 import Input from "./components/Input";
 import Textarea from "./components/Textarea";
-import DroppableColumn from "./components/DroppableColumn";
-import SortableTask from "./components/SortableTask";
+import Logo from "./components/Logo";
+import TableView from "./components/TableView";
+import FloatingDatePicker from "./components/FloatingDatePicker";
+import UserFilterDropdown from "./components/UserFilterDropdown";
 import Column from "./components/Column";
-import Sheet from "./dialogs/Sheet";
-import Dialog from "./dialogs/Dialog";
-import { Status, Priority, Task } from "./utils/types";
-
-
 
 const COLUMNS = [
-  {
-    id: "todo",
-    title: "Not Started",
-    color: "bg-gradient-to-br from-zinc-50 via-zinc-100 to-stone-100 dark:from-zinc-800 dark:via-zinc-900 dark:to-stone-900",
-    icon: <CalendarDays className="h-4 w-4" />
-  },
-  {
-    id: "inprogress",
-    title: "In Progress",
-    color: "bg-gradient-to-br from-gray-50 via-gray-100 to-blue-100 dark:from-gray-800 dark:via-gray-900 dark:to-blue-900",
-    icon: <Loader2 className="h-4 w-4 animate-spin-slow" />
-  },
-  {
-    id: "blocker",
-    title: "Blocked",
-    color: "bg-gradient-to-br from-stone-100 via-zinc-100 to-red-50 dark:from-stone-900 dark:via-zinc-900 dark:to-red-900",
-    icon: <AlertTriangle className="h-4 w-4" />
-  },
-  {
-    id: "done",
-    title: "Done",
-    color: "bg-gradient-to-br from-emerald-50 via-gray-100 to-zinc-50 dark:from-emerald-900 dark:via-gray-900 dark:to-zinc-900",
-    icon: <CheckCircle2 className="h-4 w-4" />
-  },
+  { id: "todo", title: "Not Started", color: "zinc" },
+  { id: "inprogress", title: "In Progress", color: "indigo" },
+  { id: "blocker", title: "Blocked", color: "rose" },
+  { id: "done", title: "Done", color: "emerald" },
 ] as const;
-
-// ...existing code...
 
 export default function App() {
   const [dark, setDark] = useState(() => {
@@ -79,11 +35,13 @@ export default function App() {
     return saved ? JSON.parse(saved) as Task[] : [];
   });
   const [query, setQuery] = useState("");
+  const [userFilter, setUserFilter] = useState<string[]>([]);
   const [sheetTask, setSheetTask] = useState<Task | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [jiraOpen, setJiraOpen] = useState(false);
   const [jiraBaseUrl, setJiraBaseUrl] = useState(() => localStorage.getItem("kanban-jira-base") || "");
   const [jiraConnected, setJiraConnected] = useState(() => !!localStorage.getItem("kanban-jira-base"));
+  const [selectedDate, setSelectedDate] = useState("");
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -97,20 +55,58 @@ export default function App() {
     if (jiraBaseUrl) localStorage.setItem("kanban-jira-base", jiraBaseUrl);
   }, [jiraBaseUrl]);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+        tolerance: 5,
+        delay: 150
+      }
+    })
+  );
+
+  // Get unique users for filter dropdown
+  const users = Array.from(new Set(tasks.map(t => t.owner).filter(Boolean)));
 
   const columns = useMemo(() => {
     const byCol: Record<Status, Task[]> = { todo: [], inprogress: [], blocker: [], done: [] };
-    tasks
-      .filter(
-        (t) =>
-          t.name.toLowerCase().includes(query.toLowerCase()) ||
-          (t.jiraKey || "").toLowerCase().includes(query.toLowerCase()) ||
-          (t.owner || "").toLowerCase().includes(query.toLowerCase())
-      )
-      .forEach((t) => byCol[t.status].push(t as Task));
+    
+    tasks.filter((t) => {
+      // User filter
+      const passesUserFilter = userFilter.length === 0 || userFilter.includes(t.owner);
+      
+      // Search query filter
+      const passesSearchFilter = 
+        query === "" || 
+        t.name.toLowerCase().includes(query.toLowerCase()) ||
+        (t.jiraKey || "").toLowerCase().includes(query.toLowerCase()) ||
+        (t.owner || "").toLowerCase().includes(query.toLowerCase());
+      
+      // Date filter
+      let passesDateFilter = !selectedDate; // If no date selected, show everything
+      if (selectedDate) {
+        if (!t.startDate && !t.endDate) {
+          passesDateFilter = false; // No dates on task, don't show when filtering by date
+        } else {
+          const selectDate = new Date(selectedDate);
+          const startDate = t.startDate ? new Date(t.startDate) : null;
+          const endDate = t.endDate ? new Date(t.endDate) : null;
+          
+          if (startDate && endDate) {
+            passesDateFilter = selectDate >= startDate && selectDate <= endDate;
+          } else if (startDate) {
+            passesDateFilter = selectDate >= startDate;
+          } else if (endDate) {
+            passesDateFilter = selectDate <= endDate;
+          }
+        }
+      }
+      
+      return passesUserFilter && passesSearchFilter && passesDateFilter;
+    }).forEach((t) => byCol[t.status].push(t));
+    
     return byCol;
-  }, [tasks, query]);
+  }, [tasks, query, userFilter, selectedDate]);
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
@@ -133,28 +129,34 @@ export default function App() {
   };
 
   const onDelete = (id: string) => setTasks((prev) => prev.filter((t) => t.id !== id));
-  const addTask = (task: Task) => setTasks((prev) => [{ ...task }, ...prev]);
+  const addTask = (task: Task) => {
+    setTasks((prev) => [{ ...task }, ...prev]);
+    setUserFilter([]);
+  };
 
 // ...existing code...
 
   const filteredColumns = COLUMNS.map((c) => ({ ...c, tasks: (columns as any)[c.id] as Task[] }));
 
   return (
-    <div className={`${dark ? "dark" : ""}`}>
-      <div className="min-h-screen bg-gradient-to-b from-zinc-100 to-zinc-200 p-6 dark:from-zinc-950 dark:to-zinc-900">
-        <div className="mx-auto max-w-7xl">
+    <div className={`${dark ? "dark" : ""}`}> 
+      <div className="h-screen overflow-hidden bg-gradient-to-b from-zinc-100 to-zinc-200 p-6 dark:from-zinc-950 dark:to-zinc-900"> 
+        <div className="mx-auto max-w-7xl h-full flex flex-col"> 
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <motion.h1 initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="text-2xl font-bold tracking-tight dark:text-zinc-100">
-                Status Board
-              </motion.h1>
-              <Badge className="border-indigo-300 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700">Kanban • Drag & Drop</Badge>
+              <Logo />
             </div>
             <div className="flex items-center gap-2">
+              <FloatingDatePicker
+                selectedDate={selectedDate}
+                onDateSelect={(date) => setSelectedDate(date)}
+                onClear={() => setSelectedDate("")}
+              />
               <div className="relative">
                 <Search className="pointer-events-none absolute left-2 top-2.5 h-4 w-4 text-zinc-400" />
                 <Input placeholder="Search by task, owner, or JIRA key" className="pl-8" value={query} onChange={(e: any) => setQuery(e.target.value)} />
               </div>
+              <UserFilterDropdown users={users} selected={userFilter} setSelected={setUserFilter} />
               <Button onClick={() => setDark((d: boolean) => !d)}>
                 {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 {dark ? "Light" : "Dark"} mode
@@ -168,16 +170,71 @@ export default function App() {
             </div>
           </div>
 
-          <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {filteredColumns.map((col: any) => (
-                <div key={col.id} className="flex flex-col">
-                  <Column id={col.id} title={col.title} color={col.color} tasks={col.tasks} onInspect={setSheetTask} onDelete={(id: string) => setTasks(prev => prev.filter(t => t.id !== id))} />
-                </div>
-              ))}
+          {/* Active filters band */}
+          {(userFilter.length > 0 || query || selectedDate) && (
+            <div className="mb-4 flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/30">
+              <div className="flex flex-wrap items-center gap-4">
+                {selectedDate && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-indigo-700 dark:text-indigo-200">📅 Date:</span>
+                    <span className="text-sm text-zinc-700 dark:text-zinc-100">{selectedDate}</span>
+                  </div>
+                )}
+                {userFilter.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-indigo-700 dark:text-indigo-200">👥 Users:</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {userFilter.map(user => (
+                        <span key={user} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-800/50">
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500 text-white font-bold text-xs">
+                            {user.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          </span>
+                          <span className="text-sm text-indigo-700 dark:text-indigo-200">{user}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {query && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-indigo-700 dark:text-indigo-200">🔍 Search:</span>
+                    <span className="text-sm text-zinc-700 dark:text-zinc-100">"{query}"</span>
+                  </div>
+                )}
+              </div>
+              <Button 
+                onClick={() => {
+                  setSelectedDate("");
+                  setQuery("");
+                  setUserFilter([]);
+                }}
+                className="shrink-0 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+              >
+                Reset All Filters
+              </Button>
             </div>
-            <DragOverlay />
-          </DndContext>
+          )}
+
+          {(query || userFilter.length > 0 || selectedDate) ? (
+            <div className="flex-1 overflow-y-auto px-1">
+              <TableView
+                tasks={Object.values(columns).flat()} 
+                onInspect={setSheetTask} 
+                onDelete={(id) => setTasks(prev => prev.filter(t => t.id !== id))} 
+              />
+            </div>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}> 
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 flex-1"> 
+                {filteredColumns.map((col: any) => ( 
+                  <div key={col.id} className="flex flex-col h-full"> 
+                    <Column id={col.id} title={col.title} color={col.color} tasks={col.tasks} onInspect={setSheetTask} onDelete={(id: string) => setTasks(prev => prev.filter(t => t.id !== id))} /> 
+                  </div> 
+                ))} 
+              </div> 
+              <DragOverlay /> 
+            </DndContext> 
+          )}
 
           <Sheet open={!!sheetTask} onClose={() => setSheetTask(null)} title={sheetTask?.name || "Task"}>
             {sheetTask && (

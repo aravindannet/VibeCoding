@@ -6,6 +6,10 @@ import { Task } from "../utils/types";
 
 const Column = ({ id, title, color, tasks, onInspect, onDelete }: any) => {
   const count = tasks.length;
+  // Shrink cards if more than 7 and less than or equal to 10 tasks
+  const shrinkCards = tasks.length > 3 && tasks.length <= 10;
+  // Always enforce max height and scroll for overflow
+  const columnScrollClass = 'overflow-y-auto max-h-[520px]';
   return (
     <div className="flex h-full min-h-[460px] flex-col">
       <div className="mb-3 flex items-center justify-between">
@@ -18,7 +22,7 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete }: any) => {
             key={count}
             initial={{ rotateX: 90, opacity: 0 }}
             animate={{ rotateX: 0, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            transition={{ type: "spring", stiffness: 100, damping: 20 }}
             className="border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-indigo-600 dark:text-indigo-300 font-extrabold text-4xl px-4 py-2 rounded-xl shadow-lg flex items-center justify-center"
             style={{ perspective: 400 }}
           >
@@ -26,9 +30,9 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete }: any) => {
           </motion.div>
         </div>
       </div>
-      <DroppableColumn id={id} className={`flex-1 rounded-2xl border border-dashed ${color} p-3 dark:border-zinc-700`}>
+      <DroppableColumn id={id} className={`flex-1 rounded-2xl border border-dashed ${color} p-3 dark:border-zinc-700 ${columnScrollClass}`}> 
         {tasks.map((task: Task) => (
-          <SortableTask key={task.id} task={task} onInspect={onInspect} onDelete={onDelete} />
+          <SortableTask key={task.id} task={task} onInspect={onInspect} onDelete={onDelete} shrink={shrinkCards} />
         ))}
       </DroppableColumn>
     </div>
