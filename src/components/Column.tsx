@@ -9,7 +9,7 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate }: 
   // Shrink cards if more than 7 and less than or equal to 10 tasks
   const shrinkCards = tasks.length > 3 && tasks.length <= 10;
   // Always enforce max height and scroll for overflow
-  const columnScrollClass = 'overflow-y-auto max-h-[520px]';
+  const columnScrollClass = 'overflow-y-auto max-h-[400px] sm:max-h-[520px]';
   return (
     <div className="flex h-full min-h-[460px] flex-col">
       <div className="mb-3 flex items-center justify-between">
