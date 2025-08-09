@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { ThemeWrapper } from "./theme/ThemeWrapper";
 import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import { Status, Task, Priority } from "./utils/types";
 import AddTaskDialog from "./dialogs/AddTaskDialog";
@@ -143,7 +144,8 @@ export default function App() {
   const filteredColumns = COLUMNS.map((c) => ({ ...c, tasks: (columns as any)[c.id] as Task[] }));
 
   return (
-    <div className={`${dark ? "dark" : ""}`}> 
+    <ThemeWrapper>
+      <div className={`${dark ? "dark" : ""}`}> 
       <div className="min-h-screen bg-gradient-to-b from-zinc-100 to-zinc-200 p-2 sm:p-4 md:p-6 dark:from-zinc-950 dark:to-zinc-900 overflow-x-hidden">
         <div className="mx-auto max-w-7xl h-full flex flex-col"> 
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -229,7 +231,8 @@ export default function App() {
               <TableView
                 tasks={Object.values(columns).flat()} 
                 onInspect={setSheetTask} 
-                onDelete={(id) => setTasks(prev => prev.filter(t => t.id !== id))} 
+                onDelete={(id) => setTasks(prev => prev.filter(t => t.id !== id))}
+                onUpdate={handleTaskUpdate}
               />
             </div>
           ) : (
@@ -396,5 +399,6 @@ export default function App() {
         </div>
       </div>
     </div>
+    </ThemeWrapper>
   );
 }
