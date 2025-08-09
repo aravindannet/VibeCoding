@@ -1,14 +1,15 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
-import { User as UserIcon, Link as LinkIcon, ExternalLink, Trash2, MoveRight } from "lucide-react";
+import { User as UserIcon, Link as LinkIcon, ExternalLink, Trash2, MoveRight, ThumbsUp, ThumbsDown, Heart } from "lucide-react";
+
 import Card from "./Card";
 import Badge from "./Badge";
 import Button from "./Button";
 import { Task, Priority } from "../utils/types";
 
-const SortableTask = ({ task, onInspect, onDelete, dragOverlay = false, shrink = false }: any) => {
+const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false, shrink = false }: any) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
   const isOverlay = dragOverlay === true;
   const style = isOverlay
@@ -80,23 +81,57 @@ const SortableTask = ({ task, onInspect, onDelete, dragOverlay = false, shrink =
               </Button>
             </div>
           </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px]">
+          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-1.5 text-[10px]">
             <div className="flex items-center gap-1">
               <Badge className="!px-1.5 !py-0.5 border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600">{task.startDate || "—"}</Badge>
               <MoveRight className="h-2.5 w-2.5 text-zinc-400" />
               <Badge className="!px-1.5 !py-0.5 border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600">{task.endDate || "—"}</Badge>
             </div>
-            {task.priority && (
-              <Badge
-                className={`!px-1.5 !py-0.5 border-transparent ${{
-                  High: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200",
-                  Medium: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200",
-                  Low: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200",
-                }[task.priority as Priority]}`}
-              >
-                {task.priority}
-              </Badge>
-            )}
+            <div className="flex items-center gap-1.5">
+              {task.priority && (
+                <Badge
+                  className={`!px-1.5 !py-0.5 border-transparent ${{
+                    High: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200",
+                    Medium: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200",
+                    Low: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200",
+                  }[task.priority as Priority]}`}
+                >
+                  {task.priority}
+                </Badge>
+              )}
+              <div className="flex items-center gap-0.5">
+                <Button 
+                  className={`!rounded-full !p-1 transition-colors ${task.reaction === 'like' ? 'bg-emerald-500 text-white dark:bg-emerald-500 dark:text-white shadow-lg shadow-emerald-500/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
+                  title="Like"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdate({ ...task, reaction: task.reaction === 'like' ? undefined : 'like' });
+                  }}
+                >
+                  <ThumbsUp className={`h-3 w-3 ${task.reaction === 'like' ? 'fill-white' : ''}`} />
+                </Button>
+                <Button 
+                  className={`!rounded-full !p-1 transition-colors ${task.reaction === 'dislike' ? 'bg-amber-400 text-white dark:bg-amber-400 dark:text-white shadow-lg shadow-amber-400/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
+                  title="Dislike"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdate({ ...task, reaction: task.reaction === 'dislike' ? undefined : 'dislike' });
+                  }}
+                >
+                  <ThumbsDown className={`h-3 w-3 ${task.reaction === 'dislike' ? 'fill-white' : ''}`} />
+                </Button>
+                <Button 
+                  className={`!rounded-full !p-1 transition-colors ${task.reaction === 'heart' ? 'bg-red-500 text-white dark:bg-red-500 dark:text-white shadow-lg shadow-red-500/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
+                  title="Heart"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdate({ ...task, reaction: task.reaction === 'heart' ? undefined : 'heart' });
+                  }}
+                >
+                  <Heart className={`h-3 w-3 ${task.reaction === 'heart' ? 'fill-white' : ''}`} />
+                </Button>
+              </div>
+            </div>
           </div>
         </Card>
       </div>

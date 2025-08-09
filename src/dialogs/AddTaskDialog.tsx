@@ -155,8 +155,19 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl }: any) => {
           </div>
         </div>
         <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" onClick={() => setAddOpen(false)}>Cancel</Button>
-          <PrimaryButton type="submit"><Plus className="h-4 w-4" /> Save Task</PrimaryButton>
+          <Button 
+            type="button" 
+            onClick={() => setAddOpen(false)}
+            className="backdrop-blur-sm backdrop-saturate-150 bg-white/40 dark:bg-zinc-800/40 border border-white/20 dark:border-zinc-700/20 hover:bg-white/60 dark:hover:bg-zinc-700/60 transition-colors px-3 py-1.5 rounded-lg text-sm font-medium"
+          >
+            Cancel
+          </Button>
+          <button
+            type="submit"
+            className="backdrop-blur-sm backdrop-saturate-150 bg-indigo-500/90 text-white border border-indigo-400/50 shadow-lg shadow-indigo-500/20 hover:bg-indigo-600/90 transition-colors px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5"
+          >
+            <Plus className="h-4 w-4" /> Save Task
+          </button>
         </div>
       </form>
     </Dialog>
