@@ -11,6 +11,7 @@ interface TaskBoardProps {
   onTaskMove: (taskId: string, status: Status) => void;
   onInspect: (task: Task) => void;
   onDelete: (id: string) => void;
+  onUpdate: (task: Task) => void;
 }
 
 const TaskBoard: React.FC<TaskBoardProps> = ({
@@ -19,6 +20,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
   onTaskMove,
   onInspect,
   onDelete,
+  onUpdate,
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -60,6 +62,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
           tasks={tasks}
           onInspect={onInspect}
           onDelete={onDelete}
+          onUpdate={onUpdate}
         />
       </div>
     );
