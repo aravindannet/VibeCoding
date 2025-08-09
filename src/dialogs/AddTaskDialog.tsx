@@ -89,7 +89,7 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl }: any) => {
           backdropFilter: 'blur(24px)',
         }}
       >
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Task name</label>
             <Input required placeholder="e.g., Implement login API" value={name} onChange={(e: any) => setName(e.target.value)} />
@@ -120,10 +120,13 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl }: any) => {
                 ref={pickerRef}
                 className="z-[9999] rounded-xl border border-zinc-700 bg-zinc-900 p-2 shadow-lg fixed"
                 style={{
-                  top: '20vh',
+                  top: '50%',
                   left: '50%',
-                  transform: 'translateX(-50%)',
-                  minWidth: '320px',
+                  transform: 'translate(-50%, -50%)',
+                  width: '90vw',
+                  maxWidth: '360px',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
                   background: '#18181b',
                   color: '#e0e7ff',
                   boxShadow: '0 8px 32px 0 rgba(31,38,135,0.25)',
@@ -144,7 +147,7 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl }: any) => {
             )}
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Jira issue key (optional)</label>
             <Input placeholder="e.g., ABC-123" value={jiraKey} onChange={(e: any) => setJiraKey(e.target.value.toUpperCase())} />
@@ -155,19 +158,8 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl }: any) => {
           </div>
         </div>
         <div className="flex justify-end gap-2 pt-2">
-          <Button 
-            type="button" 
-            onClick={() => setAddOpen(false)}
-            className="backdrop-blur-sm backdrop-saturate-150 bg-white/40 dark:bg-zinc-800/40 border border-white/20 dark:border-zinc-700/20 hover:bg-white/60 dark:hover:bg-zinc-700/60 transition-colors px-3 py-1.5 rounded-lg text-sm font-medium"
-          >
-            Cancel
-          </Button>
-          <button
-            type="submit"
-            className="backdrop-blur-sm backdrop-saturate-150 bg-indigo-500/90 text-white border border-indigo-400/50 shadow-lg shadow-indigo-500/20 hover:bg-indigo-600/90 transition-colors px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5"
-          >
-            <Plus className="h-4 w-4" /> Save Task
-          </button>
+          <Button type="button" onClick={() => setAddOpen(false)}>Cancel</Button>
+          <PrimaryButton type="submit"><Plus className="h-4 w-4" /> Save Task</PrimaryButton>
         </div>
       </form>
     </Dialog>

@@ -8,7 +8,7 @@ const Sheet = ({ open, onClose, title, children }: any) => (
       onClick={onClose}
     />
     <div
-      className={`absolute right-0 top-0 h-full w-full max-w-md rounded-2xl border backdrop-blur-2xl shadow-2xl transition-transform dark:bg-zinc-900/40 dark:border-zinc-700/40 dark:backdrop-blur-md ${open ? "translate-x-0" : "translate-x-full"}`}
+      className={`absolute right-0 top-0 h-full w-full sm:max-w-md rounded-2xl border backdrop-blur-2xl shadow-2xl transition-transform dark:bg-zinc-900/40 dark:border-zinc-700/40 dark:backdrop-blur-md ${open ? "translate-x-0" : "translate-x-full"}`}
       style={{
         boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
         border: '1px solid rgba(255,255,255,0.25)',
