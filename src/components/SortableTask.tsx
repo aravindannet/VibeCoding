@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
@@ -46,7 +46,7 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
       }}
     >
       <div ref={isOverlay ? undefined : setNodeRef} {...(isOverlay ? {} : attributes)} {...(isOverlay ? {} : listeners)}>
-  <Card className={`mb-2 cursor-grab active:cursor-grabbing ${isDragging || isOverlay ? "ring-2 ring-indigo-400" : ""} py-2 px-2.5`}>
+          <Card className={`mb-2 cursor-grab active:cursor-grabbing ${isDragging || isOverlay ? "ring-2 ring-indigo-400" : ""} py-2 px-2.5`}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-0.5">
               <div className="flex items-center gap-1.5">
