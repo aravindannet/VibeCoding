@@ -11,4 +11,5 @@ export type Task = {
   jiraBaseUrl?: string | null;
   status: Status;
   priority?: Priority;
+  reaction?: 'like' | 'dislike' | 'heart';
 };
