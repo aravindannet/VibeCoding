@@ -19,10 +19,10 @@ import UserFilterDropdown from "./components/UserFilterDropdown";
 import Column from "./components/Column";
 
 const COLUMNS = [
-  { id: "todo", title: "Not Started", color: "zinc" },
-  { id: "inprogress", title: "In Progress", color: "indigo" },
-  { id: "blocker", title: "Blocked", color: "rose" },
-  { id: "done", title: "Done", color: "emerald" },
+  { id: "todo", title: "Not Started", color: "bg-zinc-100" },
+  { id: "inprogress", title: "In Progress", color: "bg-amber-100" },
+  { id: "blocker", title: "Blocked", color: "bg-rose-100" },
+  { id: "done", title: "Done", color: "bg-emerald-100" },
 ] as const;
 
 export default function App() {
@@ -133,6 +133,10 @@ export default function App() {
     setTasks((prev) => [{ ...task }, ...prev]);
     setUserFilter([]);
   };
+  
+  const handleTaskUpdate = (updatedTask: Task) => {
+    setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+  };
 
 // ...existing code...
 
@@ -140,7 +144,7 @@ export default function App() {
 
   return (
     <div className={`${dark ? "dark" : ""}`}> 
-      <div className="h-screen overflow-hidden bg-gradient-to-b from-zinc-100 to-zinc-200 p-6 dark:from-zinc-950 dark:to-zinc-900"> 
+      <div className="h-screen overflow-hidden bg-gradient-to-b from-zinc-100 to-zinc-200 p-6 dark:from-zinc-950 dark:to-zinc-900">
         <div className="mx-auto max-w-7xl h-full flex flex-col"> 
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -228,7 +232,15 @@ export default function App() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 flex-1"> 
                 {filteredColumns.map((col: any) => ( 
                   <div key={col.id} className="flex flex-col h-full"> 
-                    <Column id={col.id} title={col.title} color={col.color} tasks={col.tasks} onInspect={setSheetTask} onDelete={(id: string) => setTasks(prev => prev.filter(t => t.id !== id))} /> 
+                    <Column 
+                      id={col.id} 
+                      title={col.title} 
+                      color={col.color} 
+                      tasks={col.tasks} 
+                      onInspect={setSheetTask} 
+                      onDelete={(id: string) => setTasks(prev => prev.filter(t => t.id !== id))}
+                      onTaskUpdate={handleTaskUpdate}
+                    /> 
                   </div> 
                 ))} 
               </div> 
