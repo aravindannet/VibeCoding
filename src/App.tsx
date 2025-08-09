@@ -72,8 +72,6 @@ const COLUMNS = [
 // ...existing code...
 
 export default function App() {
-  // Dropdown state for user filter
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("kanban-dark");
     return saved ? saved === "1" : true; // default to dark
@@ -102,7 +100,15 @@ export default function App() {
     if (jiraBaseUrl) localStorage.setItem("kanban-jira-base", jiraBaseUrl);
   }, [jiraBaseUrl]);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+        tolerance: 5,
+        delay: 150
+      }
+    })
+  );
 
   // Get unique users for filter dropdown
   const users = Array.from(new Set(tasks.map(t => t.owner).filter(Boolean)));
@@ -179,8 +185,6 @@ export default function App() {
                 <Plus className="h-4 w-4" /> Add Task
               </PrimaryButton>
             </div>
-  // Dropdown state for user filter
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
           </div>
 
           {/* Selected users band */}

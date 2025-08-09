@@ -12,21 +12,37 @@ const SortableTask = ({ task, onInspect, onDelete, dragOverlay = false, shrink =
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
   const isOverlay = dragOverlay === true;
   const style = isOverlay
-    ? undefined
+    ? {
+        transform: CSS.Transform.toString(transform),
+        transition: 'transform 200ms ease-in-out',
+      }
     : {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
-        scale: isDragging ? 0.97 : 1,
-        zIndex: isDragging ? 1 : 0,
+        opacity: isDragging ? 0.9 : 1,
+        scale: isDragging ? 1.02 : 1,
+        zIndex: isDragging ? 999 : 0,
       };
   return (
     <motion.div
       layout
       style={style}
-      initial={isOverlay ? { scale: 0.95, opacity: 0.8, boxShadow: '0 8px 32px 0 rgba(31,38,135,0.25)' } : false}
-      animate={isOverlay ? { scale: 1.05, opacity: 1, boxShadow: '0 16px 48px 0 rgba(31,38,135,0.25)' } : false}
-      transition={isOverlay ? { type: 'spring', stiffness: 350, damping: 30 } : {}}
+      initial={isOverlay ? { scale: 1.05, opacity: 0.95, boxShadow: '0 12px 40px 0 rgba(31,38,135,0.3)' } : false}
+      animate={isOverlay ? { 
+        scale: 1.05,
+        opacity: 1,
+        boxShadow: '0 20px 60px 0 rgba(31,38,135,0.35)',
+        rotateZ: transform?.toString().includes('rotate') ? 0 : undefined
+      } : {}}
+      transition={isOverlay ? { 
+        type: 'spring',
+        stiffness: 400,
+        damping: 25,
+        mass: 1
+      } : {
+        duration: 0.2,
+        ease: 'easeOut'
+      }}
     >
       <div ref={isOverlay ? undefined : setNodeRef} {...(isOverlay ? {} : attributes)} {...(isOverlay ? {} : listeners)}>
   <Card className={`mb-2 cursor-grab active:cursor-grabbing ${isDragging || isOverlay ? "ring-2 ring-indigo-400" : ""} py-2 px-2.5`}>
