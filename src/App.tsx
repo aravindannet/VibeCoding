@@ -24,6 +24,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import AddTaskDialog from "./dialogs/AddTaskDialog";
+import UserFilterDropdown from "./components/UserFilterDropdown";
 import JiraDialog from "./dialogs/JiraDialog";
 import Card from "./components/Card";
 import Badge from "./components/Badge";
@@ -36,6 +37,7 @@ import SortableTask from "./components/SortableTask";
 import Column from "./components/Column";
 import Sheet from "./dialogs/Sheet";
 import Dialog from "./dialogs/Dialog";
+import TableView from "./components/TableView";
 import { Status, Priority, Task } from "./utils/types";
 
 
@@ -44,25 +46,25 @@ const COLUMNS = [
   {
     id: "todo",
     title: "Not Started",
-    color: "bg-gradient-to-br from-zinc-50 via-zinc-100 to-stone-100 dark:from-zinc-800 dark:via-zinc-900 dark:to-stone-900",
+    color: "bg-gradient-to-b from-indigo-50 via-violet-50 via-purple-50 to-sky-50 dark:from-indigo-900/40 dark:via-violet-900/40 dark:via-purple-900/40 dark:to-sky-900/40",
     icon: <CalendarDays className="h-4 w-4" />
   },
   {
     id: "inprogress",
     title: "In Progress",
-    color: "bg-gradient-to-br from-gray-50 via-gray-100 to-blue-100 dark:from-gray-800 dark:via-gray-900 dark:to-blue-900",
+    color: "bg-gradient-to-b from-amber-50 via-orange-50 via-yellow-50 to-blue-50 dark:from-amber-900/40 dark:via-orange-900/40 dark:via-yellow-900/40 dark:to-blue-900/40",
     icon: <Loader2 className="h-4 w-4 animate-spin-slow" />
   },
   {
     id: "blocker",
     title: "Blocked",
-    color: "bg-gradient-to-br from-stone-100 via-zinc-100 to-red-50 dark:from-stone-900 dark:via-zinc-900 dark:to-red-900",
+    color: "bg-gradient-to-b from-rose-50 via-pink-50 via-red-50 to-orange-50 dark:from-rose-900/40 dark:via-pink-900/40 dark:via-red-900/40 dark:to-orange-900/40",
     icon: <AlertTriangle className="h-4 w-4" />
   },
   {
     id: "done",
     title: "Done",
-    color: "bg-gradient-to-br from-emerald-50 via-gray-100 to-zinc-50 dark:from-emerald-900 dark:via-gray-900 dark:to-zinc-900",
+    color: "bg-gradient-to-b from-emerald-50 via-green-50 via-teal-50 to-cyan-50 dark:from-emerald-900/40 dark:via-green-900/40 dark:via-teal-900/40 dark:to-cyan-900/40",
     icon: <CheckCircle2 className="h-4 w-4" />
   },
 ] as const;
@@ -70,6 +72,8 @@ const COLUMNS = [
 // ...existing code...
 
 export default function App() {
+  // Dropdown state for user filter
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("kanban-dark");
     return saved ? saved === "1" : true; // default to dark
@@ -79,6 +83,7 @@ export default function App() {
     return saved ? JSON.parse(saved) as Task[] : [];
   });
   const [query, setQuery] = useState("");
+  const [userFilter, setUserFilter] = useState<string[]>([]);
   const [sheetTask, setSheetTask] = useState<Task | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [jiraOpen, setJiraOpen] = useState(false);
@@ -99,18 +104,22 @@ export default function App() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
+  // Get unique users for filter dropdown
+  const users = Array.from(new Set(tasks.map(t => t.owner).filter(Boolean)));
+
   const columns = useMemo(() => {
     const byCol: Record<Status, Task[]> = { todo: [], inprogress: [], blocker: [], done: [] };
     tasks
       .filter(
         (t) =>
-          t.name.toLowerCase().includes(query.toLowerCase()) ||
-          (t.jiraKey || "").toLowerCase().includes(query.toLowerCase()) ||
-          (t.owner || "").toLowerCase().includes(query.toLowerCase())
+          (userFilter.length > 0 ? userFilter.includes(t.owner) : true) &&
+          (t.name.toLowerCase().includes(query.toLowerCase()) ||
+            (t.jiraKey || "").toLowerCase().includes(query.toLowerCase()) ||
+            (t.owner || "").toLowerCase().includes(query.toLowerCase()))
       )
       .forEach((t) => byCol[t.status].push(t as Task));
     return byCol;
-  }, [tasks, query]);
+  }, [tasks, query, userFilter]);
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
@@ -133,16 +142,19 @@ export default function App() {
   };
 
   const onDelete = (id: string) => setTasks((prev) => prev.filter((t) => t.id !== id));
-  const addTask = (task: Task) => setTasks((prev) => [{ ...task }, ...prev]);
+  const addTask = (task: Task) => {
+    setTasks((prev) => [{ ...task }, ...prev]);
+    setUserFilter([]);
+  };
 
 // ...existing code...
 
   const filteredColumns = COLUMNS.map((c) => ({ ...c, tasks: (columns as any)[c.id] as Task[] }));
 
   return (
-    <div className={`${dark ? "dark" : ""}`}>
-      <div className="min-h-screen bg-gradient-to-b from-zinc-100 to-zinc-200 p-6 dark:from-zinc-950 dark:to-zinc-900">
-        <div className="mx-auto max-w-7xl">
+    <div className={`${dark ? "dark" : ""}`}> 
+      <div className="h-screen overflow-hidden bg-gradient-to-b from-zinc-100 to-zinc-200 p-6 dark:from-zinc-950 dark:to-zinc-900"> 
+        <div className="mx-auto max-w-7xl h-full flex flex-col"> 
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <motion.h1 initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="text-2xl font-bold tracking-tight dark:text-zinc-100">
@@ -155,6 +167,7 @@ export default function App() {
                 <Search className="pointer-events-none absolute left-2 top-2.5 h-4 w-4 text-zinc-400" />
                 <Input placeholder="Search by task, owner, or JIRA key" className="pl-8" value={query} onChange={(e: any) => setQuery(e.target.value)} />
               </div>
+              <UserFilterDropdown users={users} selected={userFilter} setSelected={setUserFilter} />
               <Button onClick={() => setDark((d: boolean) => !d)}>
                 {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 {dark ? "Light" : "Dark"} mode
@@ -166,18 +179,45 @@ export default function App() {
                 <Plus className="h-4 w-4" /> Add Task
               </PrimaryButton>
             </div>
+  // Dropdown state for user filter
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
           </div>
 
-          <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {filteredColumns.map((col: any) => (
-                <div key={col.id} className="flex flex-col">
-                  <Column id={col.id} title={col.title} color={col.color} tasks={col.tasks} onInspect={setSheetTask} onDelete={(id: string) => setTasks(prev => prev.filter(t => t.id !== id))} />
+          {/* Selected users band */}
+          {userFilter.length > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-3 px-2 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30">
+              <span className="font-semibold text-indigo-700 dark:text-indigo-200 mr-2">Filtered Users:</span>
+              {userFilter.map(user => (
+                <div key={user} className="flex items-center gap-2 mr-4">
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-500 text-white font-bold text-xs shadow">
+                    {user.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  </span>
+                  <span className="text-sm text-zinc-700 dark:text-zinc-100">{user}</span>
                 </div>
               ))}
             </div>
-            <DragOverlay />
-          </DndContext>
+          )}
+
+          {query || userFilter.length > 0 ? (
+            <div className="flex-1 overflow-y-auto px-1">
+              <TableView
+                tasks={Object.values(columns).flat()} 
+                onInspect={setSheetTask} 
+                onDelete={(id) => setTasks(prev => prev.filter(t => t.id !== id))} 
+              />
+            </div>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}> 
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 flex-1"> 
+                {filteredColumns.map((col: any) => ( 
+                  <div key={col.id} className="flex flex-col h-full"> 
+                    <Column id={col.id} title={col.title} color={col.color} tasks={col.tasks} onInspect={setSheetTask} onDelete={(id: string) => setTasks(prev => prev.filter(t => t.id !== id))} /> 
+                  </div> 
+                ))} 
+              </div> 
+              <DragOverlay /> 
+            </DndContext> 
+          )}
 
           <Sheet open={!!sheetTask} onClose={() => setSheetTask(null)} title={sheetTask?.name || "Task"}>
             {sheetTask && (
