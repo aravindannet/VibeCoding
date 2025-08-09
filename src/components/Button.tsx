@@ -6,11 +6,9 @@ const baseBtn =
 
 const Button = ({ className = "", children, ...props }: any) => (
   <button
-    className={`${baseBtn} bg-[linear-gradient(135deg,rgba(255,255,255,0.12)_60%,rgba(245,245,255,0.04)_100%)] border-zinc-300 text-zinc-900 hover:bg-zinc-200 dark:text-zinc-100 ${className}`}
+    className={`${baseBtn} bg-white border-zinc-300 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 dark:bg-zinc-900/40 dark:border-zinc-700/40 dark:text-zinc-100 dark:hover:bg-zinc-800/50 ${className}`}
     style={{
-      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
-      border: '1px solid rgba(255,255,255,0.25)',
-      backdropFilter: 'blur(24px)',
+      boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.05)',
     }}
     {...props}
   >

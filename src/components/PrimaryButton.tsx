@@ -6,12 +6,9 @@ const baseBtn =
 
 const PrimaryButton = ({ className = "", children, ...props }: any) => (
   <button
-    className={`${baseBtn} bg-[linear-gradient(135deg,rgba(99,102,241,0.10)_60%,rgba(99,102,241,0.04)_100%)] border-indigo-400 text-white hover:bg-indigo-600 dark:text-white ${className}`}
+    className={`${baseBtn} bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-700 dark:bg-indigo-600/90 dark:border-indigo-500/50 dark:hover:bg-indigo-500/80 ${className}`}
     style={{
-      boxShadow: '0 8px 32px 0 rgba(99,102,241,0.12)',
-      border: '1px solid rgba(99,102,241,0.18)',
-      backdropFilter: 'blur(24px)',
-      opacity: 0.85,
+      boxShadow: '0 4px 12px 0 rgba(99,102,241,0.2)',
     }}
     {...props}
   >
