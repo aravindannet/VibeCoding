@@ -13,7 +13,6 @@ import {
   Divider,
   IconButton,
   Stack,
-  Collapse
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -529,7 +528,7 @@ const TaskApprovalDialog: React.FC<Props> = ({ open, onClose, task, onApprove })
             )}
           </Box>
         </Box>
-        </Box>
+      </Box>
       </DialogContent>
 
       <Divider />
