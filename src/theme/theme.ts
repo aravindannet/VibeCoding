@@ -1,7 +1,8 @@
 import { createTheme } from '@mui/material/styles';
 
-export const theme = createTheme({
+export const createAppTheme = (isDark: boolean) => createTheme({
   palette: {
+    mode: isDark ? 'dark' : 'light',
     primary: {
       main: '#0000FF', // Bright blue like in the image
       light: '#3333FF',
@@ -15,13 +16,14 @@ export const theme = createTheme({
       dark: '#0077B6',
     },
     text: {
-      primary: '#1A1A1A',
-      secondary: '#666666',
+      primary: isDark ? '#ffffff' : '#1A1A1A',
+      secondary: isDark ? '#a1a1aa' : '#666666',
     },
     background: {
-      default: '#FFFFFF',
-      paper: '#FFFFFF',
+      default: isDark ? '#18181b' : '#FFFFFF',
+      paper: isDark ? '#27272a' : '#FFFFFF',
     },
+    divider: isDark ? '#3f3f46' : '#e4e4e7',
   },
   typography: {
     fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
@@ -82,13 +84,19 @@ export const theme = createTheme({
         root: {
           borderRadius: '4px',
           boxShadow: 'none',
+          backgroundColor: isDark ? '#27272a' : '#FFFFFF',
+          color: isDark ? '#ffffff' : '#1A1A1A',
         },
       },
     },
     MuiDialog: {
       styleOverrides: {
         paper: {
-          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08)',
+          boxShadow: isDark 
+            ? '0px 4px 20px rgba(0, 0, 0, 0.4)' 
+            : '0px 4px 20px rgba(0, 0, 0, 0.08)',
+          backgroundColor: isDark ? '#27272a' : '#FFFFFF',
+          color: isDark ? '#ffffff' : '#1A1A1A',
         },
       },
     },
@@ -96,6 +104,8 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           padding: '24px 24px 16px 24px',
+          backgroundColor: isDark ? '#27272a' : '#FFFFFF',
+          color: isDark ? '#ffffff' : '#1A1A1A',
         },
       },
     },
@@ -103,6 +113,8 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           padding: '16px 24px',
+          backgroundColor: isDark ? '#27272a' : '#FFFFFF',
+          color: isDark ? '#ffffff' : '#1A1A1A',
         },
       },
     },
@@ -110,6 +122,7 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           padding: '16px 24px 24px 24px',
+          backgroundColor: isDark ? '#27272a' : '#FFFFFF',
         },
       },
     },
@@ -119,6 +132,22 @@ export const theme = createTheme({
           borderRadius: '4px',
           fontWeight: 500,
         },
+        outlined: {
+          borderColor: isDark ? '#3f3f46' : '#e4e4e7',
+          color: isDark ? '#a1a1aa' : '#666666',
+          '&.MuiChip-colorPrimary': {
+            borderColor: '#0000FF',
+            color: '#0000FF',
+          },
+        },
+        filled: {
+          backgroundColor: isDark ? '#3f3f46' : '#f4f4f5',
+          color: isDark ? '#ffffff' : '#1A1A1A',
+          '&.MuiChip-colorPrimary': {
+            backgroundColor: '#0000FF',
+            color: '#ffffff',
+          },
+        },
       },
     },
     MuiTextField: {
@@ -126,7 +155,48 @@ export const theme = createTheme({
         root: {
           '& .MuiOutlinedInput-root': {
             borderRadius: '4px',
+            backgroundColor: isDark ? '#18181b' : '#FFFFFF',
+            color: isDark ? '#ffffff' : '#1A1A1A',
+            '& fieldset': {
+              borderColor: isDark ? '#3f3f46' : '#e4e4e7',
+            },
+            '&:hover fieldset': {
+              borderColor: isDark ? '#52525b' : '#d4d4d8',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#0000FF',
+            },
           },
+          '& .MuiInputLabel-root': {
+            color: isDark ? '#a1a1aa' : '#666666',
+          },
+          '& .MuiOutlinedInput-input': {
+            color: isDark ? '#ffffff' : '#1A1A1A',
+            '&::placeholder': {
+              color: isDark ? '#71717a' : '#9ca3af',
+              opacity: 1,
+            },
+          },
+        },
+      },
+    },
+    MuiDivider: {
+      styleOverrides: {
+        root: {
+          borderColor: isDark ? '#3f3f46' : '#e4e4e7',
+        },
+      },
+    },
+    MuiTypography: {
+      styleOverrides: {
+        root: {
+          color: isDark ? '#ffffff' : '#1A1A1A',
+        },
+        body2: {
+          color: isDark ? '#a1a1aa' : '#666666',
+        },
+        caption: {
+          color: isDark ? '#71717a' : '#9ca3af',
         },
       },
     },
@@ -135,9 +205,21 @@ export const theme = createTheme({
         root: {
           '& .MuiPaginationItem-root': {
             fontWeight: 500,
+            color: isDark ? '#a1a1aa' : '#666666',
+            borderColor: isDark ? '#3f3f46' : '#e4e4e7',
+            '&.Mui-selected': {
+              backgroundColor: '#0000FF',
+              color: '#ffffff',
+            },
+            '&:hover': {
+              backgroundColor: isDark ? '#3f3f46' : '#f4f4f5',
+            },
           },
         },
       },
     },
   },
 });
+
+// For backward compatibility, export the light theme as default
+export const theme = createAppTheme(false);
