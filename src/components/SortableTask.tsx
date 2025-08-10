@@ -106,7 +106,7 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
             </div>
             <div className="flex items-center gap-0.5">
               <Button 
-                className={`!rounded-full !p-1 transition-colors ${task.reaction === 'like' ? 'bg-emerald-500 text-white dark:bg-emerald-500 dark:text-white shadow-lg shadow-emerald-500/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
+                className={`!rounded-full !p-1 transition-colors ${task.reaction === 'like' ? 'bg-yellow-400 text-yellow-900 shadow-lg shadow-yellow-400/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
                 title="Like"
                 onClick={(e) => {
                   e.preventDefault();
@@ -114,10 +114,10 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
                   onUpdate({ ...task, reaction: task.reaction === 'like' ? undefined : 'like' });
                 }}
               >
-                <ThumbsUp className={`h-3 w-3 ${task.reaction === 'like' ? 'fill-white' : ''}`} />
+                <ThumbsUp className="h-3 w-3" style={task.reaction === 'like' ? { fill: '#FFC107' } : {}} />
               </Button>
               <Button 
-                className={`!rounded-full !p-1 transition-colors ${task.reaction === 'dislike' ? 'bg-amber-400 text-white dark:bg-amber-400 dark:text-white shadow-lg shadow-amber-400/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
+                className={`!rounded-full !p-1 transition-colors ${task.reaction === 'dislike' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
                 title="Dislike"
                 onClick={(e) => {
                   e.preventDefault();
@@ -125,10 +125,10 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
                   onUpdate({ ...task, reaction: task.reaction === 'dislike' ? undefined : 'dislike' });
                 }}
               >
-                <ThumbsDown className={`h-3 w-3 ${task.reaction === 'dislike' ? 'fill-white' : ''}`} />
+                <ThumbsDown className="h-3 w-3" style={task.reaction === 'dislike' ? { fill: '#FF1744' } : {}} />
               </Button>
               <Button 
-                className={`!rounded-full !p-1 transition-colors ${task.reaction === 'heart' ? 'bg-red-500 text-white dark:bg-red-500 dark:text-white shadow-lg shadow-red-500/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
+                className={`!rounded-full !p-1 transition-colors ${task.reaction === 'heart' ? 'bg-fuchsia-600 text-white shadow-lg' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
                 title="Heart"
                 onClick={(e) => {
                   e.preventDefault();
@@ -136,7 +136,7 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
                   onUpdate({ ...task, reaction: task.reaction === 'heart' ? undefined : 'heart' });
                 }}
               >
-                <Heart className={`h-3 w-3 ${task.reaction === 'heart' ? 'fill-white' : ''}`} />
+                <Heart className="h-3 w-3" style={task.reaction === 'heart' ? { fill: '#C026D3' } : {}} />
               </Button>
             </div>
           </div>
