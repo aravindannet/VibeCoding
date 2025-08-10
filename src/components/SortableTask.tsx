@@ -45,49 +45,53 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
         ease: 'easeOut'
       }}
     >
-      <div ref={isOverlay ? undefined : setNodeRef} {...(isOverlay ? {} : attributes)} {...(isOverlay ? {} : listeners)}>
-          <Card className={`mb-2 cursor-grab active:cursor-grabbing ${isDragging || isOverlay ? "ring-2 ring-indigo-400" : ""} py-2 px-2.5`}>
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 space-y-0.5">
-              <div className="flex items-center gap-1.5">
-                {task.owner && (
-                  <div className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200">
-                    <UserIcon className="h-2.5 w-2.5" /> {task.owner}
-                  </div>
+      <div ref={isOverlay ? undefined : setNodeRef}>
+        <Card className={`mb-2 ${isDragging || isOverlay ? "ring-2 ring-indigo-400" : ""} py-2 px-2.5`}>
+          {/* Draggable section: top + date area */}
+          <div {...(isOverlay ? {} : attributes)} {...(isOverlay ? {} : listeners)} className="cursor-grab active:cursor-grabbing">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  {task.owner && (
+                    <div className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200">
+                      <UserIcon className="h-2.5 w-2.5" /> {task.owner}
+                    </div>
+                  )}
+                  <div className="truncate text-sm font-bold leading-tight dark:text-zinc-100">{task.name}</div>
+                </div>
+                {task.description && (
+                  <div className="line-clamp-1 text-[11px] text-zinc-600 dark:text-zinc-400">{task.description}</div>
                 )}
-                <div className="truncate text-sm font-bold leading-tight dark:text-zinc-100">{task.name}</div>
               </div>
-              {task.description && (
-                <div className="line-clamp-1 text-[11px] text-zinc-600 dark:text-zinc-400">{task.description}</div>
-              )}
+              <div className="flex items-center gap-1">
+                {task.jiraKey && (
+                  <a
+                    href={task.jiraBaseUrl ? `${task.jiraBaseUrl.replace(/\/$/, "")}/browse/${task.jiraKey}` : `#`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group"
+                    title="Open in Jira"
+                  >
+                    <Badge className="!px-1.5 !py-0.5 border-indigo-300 text-indigo-700 bg-indigo-50 group-hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700 text-[10px]"><LinkIcon className="h-2.5 w-2.5" /> {task.jiraKey}</Badge>
+                  </a>
+                )}
+                <Button className="!rounded-full !px-1.5 !py-1.5" title="Details" onClick={() => onInspect(task)}>
+                  <ExternalLink className="h-3 w-3" />
+                </Button>
+                <Button className="!rounded-full !px-1.5 !py-1.5" title="Delete" onClick={() => onDelete(task.id)}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              {task.jiraKey && (
-                <a
-                  href={task.jiraBaseUrl ? `${task.jiraBaseUrl.replace(/\/$/, "")}/browse/${task.jiraKey}` : `#`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group"
-                  title="Open in Jira"
-                >
-                  <Badge className="!px-1.5 !py-0.5 border-indigo-300 text-indigo-700 bg-indigo-50 group-hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700 text-[10px]"><LinkIcon className="h-2.5 w-2.5" /> {task.jiraKey}</Badge>
-                </a>
-              )}
-              <Button className="!rounded-full !px-1.5 !py-1.5" title="Details" onClick={() => onInspect(task)}>
-                <ExternalLink className="h-3 w-3" />
-              </Button>
-              <Button className="!rounded-full !px-1.5 !py-1.5" title="Delete" onClick={() => onDelete(task.id)}>
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-1.5 text-[10px]">
-            <div className="flex items-center gap-1">
+            <div className="mt-1.5 flex items-center gap-1">
               <Badge className="!px-1.5 !py-0.5 border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600">{task.startDate || "—"}</Badge>
               <MoveRight className="h-2.5 w-2.5 text-zinc-400" />
               <Badge className="!px-1.5 !py-0.5 border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600">{task.endDate || "—"}</Badge>
             </div>
-            <div className="flex items-center gap-1.5">
+          </div>
+          {/* Non-draggable section: priority and reaction buttons */}
+          <div className="mt-1.5 flex items-center justify-between text-[10px]">
+            <div>
               {task.priority && (
                 <Badge
                   className={`!px-1.5 !py-0.5 border-transparent ${{
@@ -99,38 +103,41 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
                   {task.priority}
                 </Badge>
               )}
-              <div className="flex items-center gap-0.5">
-                <Button 
-                  className={`!rounded-full !p-1 transition-colors ${task.reaction === 'like' ? 'bg-emerald-500 text-white dark:bg-emerald-500 dark:text-white shadow-lg shadow-emerald-500/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
-                  title="Like"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onUpdate({ ...task, reaction: task.reaction === 'like' ? undefined : 'like' });
-                  }}
-                >
-                  <ThumbsUp className={`h-3 w-3 ${task.reaction === 'like' ? 'fill-white' : ''}`} />
-                </Button>
-                <Button 
-                  className={`!rounded-full !p-1 transition-colors ${task.reaction === 'dislike' ? 'bg-amber-400 text-white dark:bg-amber-400 dark:text-white shadow-lg shadow-amber-400/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
-                  title="Dislike"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onUpdate({ ...task, reaction: task.reaction === 'dislike' ? undefined : 'dislike' });
-                  }}
-                >
-                  <ThumbsDown className={`h-3 w-3 ${task.reaction === 'dislike' ? 'fill-white' : ''}`} />
-                </Button>
-                <Button 
-                  className={`!rounded-full !p-1 transition-colors ${task.reaction === 'heart' ? 'bg-red-500 text-white dark:bg-red-500 dark:text-white shadow-lg shadow-red-500/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
-                  title="Heart"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onUpdate({ ...task, reaction: task.reaction === 'heart' ? undefined : 'heart' });
-                  }}
-                >
-                  <Heart className={`h-3 w-3 ${task.reaction === 'heart' ? 'fill-white' : ''}`} />
-                </Button>
-              </div>
+            </div>
+            <div className="flex items-center gap-0.5">
+              <Button 
+                className={`!rounded-full !p-1 transition-colors ${task.reaction === 'like' ? 'bg-emerald-500 text-white dark:bg-emerald-500 dark:text-white shadow-lg shadow-emerald-500/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
+                title="Like"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onUpdate({ ...task, reaction: task.reaction === 'like' ? undefined : 'like' });
+                }}
+              >
+                <ThumbsUp className={`h-3 w-3 ${task.reaction === 'like' ? 'fill-white' : ''}`} />
+              </Button>
+              <Button 
+                className={`!rounded-full !p-1 transition-colors ${task.reaction === 'dislike' ? 'bg-amber-400 text-white dark:bg-amber-400 dark:text-white shadow-lg shadow-amber-400/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
+                title="Dislike"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onUpdate({ ...task, reaction: task.reaction === 'dislike' ? undefined : 'dislike' });
+                }}
+              >
+                <ThumbsDown className={`h-3 w-3 ${task.reaction === 'dislike' ? 'fill-white' : ''}`} />
+              </Button>
+              <Button 
+                className={`!rounded-full !p-1 transition-colors ${task.reaction === 'heart' ? 'bg-red-500 text-white dark:bg-red-500 dark:text-white shadow-lg shadow-red-500/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
+                title="Heart"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onUpdate({ ...task, reaction: task.reaction === 'heart' ? undefined : 'heart' });
+                }}
+              >
+                <Heart className={`h-3 w-3 ${task.reaction === 'heart' ? 'fill-white' : ''}`} />
+              </Button>
             </div>
           </div>
         </Card>
