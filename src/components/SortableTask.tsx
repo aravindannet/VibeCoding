@@ -3,6 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 import { User as UserIcon, Link as LinkIcon, ExternalLink, Trash2, MoveRight, ThumbsUp, ThumbsDown, Heart } from "lucide-react";
+import { GripVertical } from "lucide-react";
 
 import Card from "./Card";
 import Badge from "./Badge";
@@ -46,48 +47,55 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
       }}
     >
       <div ref={isOverlay ? undefined : setNodeRef}>
-        <Card className={`mb-2 ${isDragging || isOverlay ? "ring-2 ring-indigo-400" : ""} py-2 px-2.5`}>
-          {/* Draggable section: top + date area */}
-          <div {...(isOverlay ? {} : attributes)} {...(isOverlay ? {} : listeners)} className="cursor-grab active:cursor-grabbing">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 space-y-0.5">
-                <div className="flex items-center gap-1.5">
-                  {task.owner && (
-                    <div className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200">
-                      <UserIcon className="h-2.5 w-2.5" /> {task.owner}
-                    </div>
-                  )}
-                  <div className="truncate text-sm font-bold leading-tight dark:text-zinc-100">{task.name}</div>
+        <Card className={`mb-3 ${isDragging || isOverlay ? "ring-2 ring-indigo-400" : ""} py-4 px-4`}>
+          {/* Top section: info and buttons */}
+          <div className="flex items-start justify-between gap-2">
+            {/* Draggable info area: left only */}
+            <div
+              className="flex items-center gap-3 min-w-0 cursor-grab active:cursor-grabbing px-2 py-1"
+              {...(isOverlay ? {} : attributes)}
+              {...(isOverlay ? {} : listeners)}
+              tabIndex={0}
+              role="button"
+              aria-label="Drag task"
+            >
+              <GripVertical className="h-4 w-4 text-zinc-400 mr-1" />
+              {task.owner && (
+                <div className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200">
+                  <UserIcon className="h-2.5 w-2.5" /> {task.owner}
                 </div>
-                {task.description && (
-                  <div className="line-clamp-1 text-[11px] text-zinc-600 dark:text-zinc-400">{task.description}</div>
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                {task.jiraKey && (
-                  <a
-                    href={task.jiraBaseUrl ? `${task.jiraBaseUrl.replace(/\/$/, "")}/browse/${task.jiraKey}` : `#`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group"
-                    title="Open in Jira"
-                  >
-                    <Badge className="!px-1.5 !py-0.5 border-indigo-300 text-indigo-700 bg-indigo-50 group-hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700 text-[10px]"><LinkIcon className="h-2.5 w-2.5" /> {task.jiraKey}</Badge>
-                  </a>
-                )}
-                <Button className="!rounded-full !px-1.5 !py-1.5" title="Details" onClick={() => onInspect(task)}>
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
-                <Button className="!rounded-full !px-1.5 !py-1.5" title="Delete" onClick={() => onDelete(task.id)}>
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
+              )}
+              <div className="truncate text-sm font-bold leading-tight dark:text-zinc-100">{task.name}</div>
+              {task.description && (
+                <div className="line-clamp-1 text-[11px] text-zinc-600 dark:text-zinc-400">{task.description}</div>
+              )}
+              {task.jiraKey && (
+                <a
+                  href={task.jiraBaseUrl ? `${task.jiraBaseUrl.replace(/\/$/, "")}/browse/${task.jiraKey}` : `#`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group"
+                  title="Open in Jira"
+                >
+                  <Badge className="!px-1.5 !py-0.5 border-indigo-300 text-indigo-700 bg-indigo-50 group-hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700 text-[10px]"><LinkIcon className="h-2.5 w-2.5" /> {task.jiraKey}</Badge>
+                </a>
+              )}
             </div>
-            <div className="mt-1.5 flex items-center gap-1">
-              <Badge className="!px-1.5 !py-0.5 border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600">{task.startDate || "—"}</Badge>
-              <MoveRight className="h-2.5 w-2.5 text-zinc-400" />
-              <Badge className="!px-1.5 !py-0.5 border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600">{task.endDate || "—"}</Badge>
+            {/* Non-draggable: Details and Delete buttons (right) */}
+            <div className="flex items-center gap-1" style={{ pointerEvents: 'auto' }}>
+              <Button className="!rounded-full !px-2 !py-2" title="Details" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onInspect(task); }}>
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+              <Button className="!rounded-full !px-2 !py-2" title="Delete" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(task.id); }}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
+          </div>
+          {/* Date area (not draggable) */}
+          <div className="mt-1.5 flex items-center gap-1">
+            <Badge className="!px-1.5 !py-0.5 border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600">{task.startDate || "—"}</Badge>
+            <MoveRight className="h-2.5 w-2.5 text-zinc-400" />
+            <Badge className="!px-1.5 !py-0.5 border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600">{task.endDate || "—"}</Badge>
           </div>
           {/* Non-draggable section: priority and reaction buttons */}
           <div className="mt-1.5 flex items-center justify-between text-[10px]">
@@ -106,7 +114,7 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
             </div>
             <div className="flex items-center gap-0.5">
               <Button 
-                className={`!rounded-full !p-1 transition-colors ${task.reaction === 'like' ? 'bg-yellow-400 text-yellow-900 shadow-lg shadow-yellow-400/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
+                className={`!rounded-full !px-2 !py-2 transition-colors ${task.reaction === 'like' ? 'bg-yellow-400 text-yellow-900 shadow-lg shadow-yellow-400/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
                 title="Like"
                 onClick={(e) => {
                   e.preventDefault();
@@ -114,10 +122,10 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
                   onUpdate({ ...task, reaction: task.reaction === 'like' ? undefined : 'like' });
                 }}
               >
-                <ThumbsUp className="h-3 w-3" style={task.reaction === 'like' ? { fill: '#FFC107' } : {}} />
+                <ThumbsUp className="h-4 w-4" style={task.reaction === 'like' ? { fill: '#FFC107' } : {}} />
               </Button>
               <Button 
-                className={`!rounded-full !p-1 transition-colors ${task.reaction === 'dislike' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
+                className={`!rounded-full !px-2 !py-2 transition-colors ${task.reaction === 'dislike' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
                 title="Dislike"
                 onClick={(e) => {
                   e.preventDefault();
@@ -125,10 +133,10 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
                   onUpdate({ ...task, reaction: task.reaction === 'dislike' ? undefined : 'dislike' });
                 }}
               >
-                <ThumbsDown className="h-3 w-3" style={task.reaction === 'dislike' ? { fill: '#FF1744' } : {}} />
+                <ThumbsDown className="h-4 w-4" style={task.reaction === 'dislike' ? { fill: '#FF1744' } : {}} />
               </Button>
               <Button 
-                className={`!rounded-full !p-1 transition-colors ${task.reaction === 'heart' ? 'bg-fuchsia-600 text-white shadow-lg' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
+                className={`!rounded-full !px-2 !py-2 transition-colors ${task.reaction === 'heart' ? 'bg-fuchsia-600 text-white shadow-lg' : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'}`}
                 title="Heart"
                 onClick={(e) => {
                   e.preventDefault();
@@ -136,7 +144,7 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
                   onUpdate({ ...task, reaction: task.reaction === 'heart' ? undefined : 'heart' });
                 }}
               >
-                <Heart className="h-3 w-3" style={task.reaction === 'heart' ? { fill: '#C026D3' } : {}} />
+                <Heart className="h-4 w-4" style={task.reaction === 'heart' ? { fill: '#C026D3' } : {}} />
               </Button>
             </div>
           </div>
