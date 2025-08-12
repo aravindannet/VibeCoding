@@ -62,10 +62,22 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
                   </div>
                   {/* Action buttons on top right */}
                   <div className="flex items-center gap-1 ml-2">
-                    <Button className="!rounded-full !px-2 !py-1" title="Details" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onInspect(task); }}>
+                    <Button className="!rounded-full !px-2 !py-1" title="Details" onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (window.confirm('Are you sure you want to edit this task?')) {
+                        onInspect(task);
+                      }
+                    }}>
                       <ExternalLink className="h-4 w-4" />
                     </Button>
-                    <Button className="!rounded-full !px-2 !py-1" title="Delete" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(task._id || task.id); }}>
+                    <Button className="!rounded-full !px-2 !py-1" title="Delete" onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (window.confirm('Are you sure you want to delete this task?')) {
+                        onDelete(task._id || task.id);
+                      }
+                    }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

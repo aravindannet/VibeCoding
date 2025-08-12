@@ -1,7 +1,7 @@
 // API utility for Kanban tasks
 
-const API_URL = 'http://localhost:5000/api'; // Change to your deployed backend URL if needed
-
+//const API_URL = 'http://localhost:5000/api'; // Change to your deployed backend URL if needed
+const API_URL = 'https://vibecoding-wd29.onrender.com/api';
 import axios from 'axios';
 export async function fetchTasks() {
   const res = await axios.get(`${API_URL}/tasks`);
