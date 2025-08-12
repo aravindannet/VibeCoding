@@ -1,19 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Task } from '../utils/types';
 import Badge from './Badge';
-import { UserIcon, LinkIcon, ExternalLink, Trash2, CheckCircle2 } from 'lucide-react';
+import { UserIcon, LinkIcon, ExternalLink, Trash2 } from 'lucide-react';
 import Button from './Button';
-import TaskApprovalDialog from '../dialogs/TaskApprovalDialog';
 
 interface TableViewProps {
   tasks: Task[];
   onInspect: (task: Task) => void;
   onDelete: (id: string) => void;
-  onUpdate: (task: Task) => void;
 }
 
-const TableView: React.FC<TableViewProps> = ({ tasks, onInspect, onDelete, onUpdate }) => {
-  const [taskToApprove, setTaskToApprove] = useState<Task | null>(null);
+const TableView: React.FC<TableViewProps> = ({ tasks, onInspect, onDelete }) => {
   return (
     <div className="relative overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
       <table className="w-full text-left text-sm">
@@ -116,33 +113,12 @@ const TableView: React.FC<TableViewProps> = ({ tasks, onInspect, onDelete, onUpd
                   <Button className="!rounded-full !px-1.5 !py-1.5" title="Delete" onClick={() => onDelete(task.id)}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
-                  <Button 
-                    className={`!rounded-full !px-1.5 !py-1.5 ${task.approvalStatus === 'approved' ? 'text-green-500' : ''}`}
-                    title={task.approvalStatus === 'approved' ? 'Approved' : 'Review & Approve'}
-                    onClick={() => setTaskToApprove(task)}
-                  >
-                    <CheckCircle2 className={`h-3 w-3 ${task.approvalStatus === 'approved' ? 'fill-green-500' : ''}`} />
-                  </Button>
                 </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      {taskToApprove && (
-        <TaskApprovalDialog
-          open={true}
-          onClose={() => setTaskToApprove(null)}
-          task={taskToApprove}
-          onApprove={(taskId, reasonCodes, comment, requiresReview) => {
-            onUpdate({
-              ...taskToApprove,
-              approvalStatus: requiresReview ? 'pending_review' : 'approved'
-            });
-            setTaskToApprove(null);
-          }}
-        />
-      )}
     </div>
   );
 };

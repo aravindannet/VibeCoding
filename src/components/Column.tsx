@@ -45,7 +45,7 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate }: 
         dark:hover:shadow-[0_0_25px_rgba(99,102,241,0.2),inset_0_0_60px_rgba(99,102,241,0.1)]`}> 
         {tasks.map((task: Task) => (
           <SortableTask 
-            key={task.id} 
+            key={task._id || task.id} 
             task={task} 
             onInspect={onInspect} 
             onDelete={onDelete} 

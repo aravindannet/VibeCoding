@@ -1,7 +1,8 @@
 import React from "react";
 
-const Card = ({ children, className = "", ...rest }: any) => (
+const Card = React.forwardRef<HTMLDivElement, any>(({ children, className = "", ...rest }, ref) => (
   <div
+    ref={ref}
     {...rest}
     className={`rounded-2xl border bg-white/80 backdrop-blur-xl p-4 shadow-lg transition-shadow duration-200 dark:bg-zinc-900/40 dark:border-zinc-700/40 dark:backdrop-blur-md hover:shadow-xl ${className}`}
     style={{
@@ -13,6 +14,6 @@ const Card = ({ children, className = "", ...rest }: any) => (
   >
     {children}
   </div>
-);
+));
 
 export default Card;
