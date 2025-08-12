@@ -44,14 +44,18 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate }: 
         hover:border-opacity-50 hover:bg-opacity-100
         dark:hover:shadow-[0_0_25px_rgba(99,102,241,0.2),inset_0_0_60px_rgba(99,102,241,0.1)]`}> 
         {tasks.map((task: Task) => (
-          <SortableTask 
-            key={task._id || task.id} 
-            task={task} 
-            onInspect={onInspect} 
-            onDelete={onDelete} 
-            onUpdate={onTaskUpdate}
-            shrink={shrinkCards} 
-          />
+          <div className="mb-4 last:mb-0 flex justify-center">
+            <div className="w-full max-w-xl">
+              <SortableTask 
+                key={task._id || task.id} 
+                task={task} 
+                onInspect={onInspect} 
+                onDelete={onDelete} 
+                onUpdate={onTaskUpdate}
+                shrink={shrinkCards} 
+              />
+            </div>
+          </div>
         ))}
       </DroppableColumn>
     </div>

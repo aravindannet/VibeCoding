@@ -81,7 +81,7 @@ const SortableTask = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false
                 {/* Date and Priority row */}
                 <div className="flex items-center gap-2">
                   {task.startDate && task.endDate && (
-                    <div className="flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-lg">
+                    <div className="flex items-center gap-1 text-[10px] text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-lg whitespace-nowrap max-w-[120px]">
                       <span>{task.startDate}</span>
                       <MoveRight className="h-3 w-3" />
                       <span>{task.endDate}</span>
