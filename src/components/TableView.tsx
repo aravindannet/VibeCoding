@@ -66,13 +66,15 @@ const TableView: React.FC<TableViewProps> = ({ tasks, onInspect, onDelete }) => 
               <td className="px-4 py-3">
                 <Badge
                   className={
-                    task.status === 'todo'
-                      ? 'border-zinc-300 bg-zinc-50 text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300'
-                      : task.status === 'inprogress'
-                      ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300'
-                      : task.status === 'blocker'
-                      ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-600 dark:bg-rose-900/30 dark:text-rose-300'
-                      : 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300'
+                    `${
+                      task.status === 'todo'
+                        ? 'border-zinc-300 bg-zinc-50 text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300'
+                        : task.status === 'inprogress'
+                        ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300'
+                        : task.status === 'blocker'
+                        ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-600 dark:bg-rose-900/30 dark:text-rose-300'
+                        : 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300'
+                    } whitespace-nowrap`
                   }
                 >
                   {task.status === 'todo'
