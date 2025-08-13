@@ -99,16 +99,14 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
     >
       <Card
         ref={isOverlay ? undefined : setNodeRef}
-        className={`relative flex select-none flex-row items-start gap-3 rounded-2xl border border-zinc-200 bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 shadow-lg px-4 py-3 transition-all duration-150 ${isDragging ? "ring-2 ring-indigo-400 scale-[1.02]" : "hover:shadow-xl"}`}
+  className={`relative flex select-none flex-row items-start gap-3 rounded-2xl border border-zinc-200 bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 shadow-lg px-4 py-3 transition-all duration-150 ${isDragging ? "ring-2 ring-indigo-400 scale-[1.02]" : "hover:shadow-xl"} cursor-grab active:cursor-grabbing`}
         style={style}
         {...attributes}
+        {...listeners}
         tabIndex={0}
         aria-label={task.name}
       >
-        {/* Drag handle */}
-        <div {...listeners} className="flex items-center cursor-grab select-none mt-1">
-          <GripVertical className="h-4 w-4 text-zinc-400" />
-        </div>
+  {/* Drag handle removed to free up space for card content */}
         {/* Card content */}
         <div className="flex flex-col flex-1 min-w-0 gap-2">
           {/* Top row: Owner, Title and Action buttons */}
@@ -127,11 +125,12 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
                 className="!rounded-full !px-2 !py-1"
                 title="Details"
                 aria-label="Edit task details"
+                onPointerDown={e => e.stopPropagation()}
                 onClick={(e) => {
                   e.preventDefault();
-                  e.stopPropagation();
                   onInspect(task);
                 }}
+                tabIndex={0}
               >
                 <ExternalLink className="h-4 w-4" />
               </Button>
@@ -139,11 +138,12 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
                 className="!rounded-full !px-2 !py-1"
                 title="Delete"
                 aria-label="Delete task"
+                onPointerDown={e => e.stopPropagation()}
                 onClick={(e) => {
                   e.preventDefault();
-                  e.stopPropagation();
                   onDelete(task._id || task.id || "");
                 }}
+                tabIndex={0}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -180,11 +180,12 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
                   className={`!rounded-full !px-2 !py-1 transition-colors ${task.reaction === key ? activeClass : hoverClass}`}
                   title={title}
                   aria-label={title}
+                  onPointerDown={e => e.stopPropagation()}
                   onClick={(e) => {
-                    e.stopPropagation();
                     e.preventDefault();
                     onUpdate({ ...task, reaction: task.reaction === key ? undefined : key as Task['reaction'] });
                   }}
+                  tabIndex={0}
                 >
                   <Icon className="h-4 w-4" style={task.reaction === key ? { fill } : {}} />
                 </Button>
@@ -197,6 +198,8 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
                 rel="noreferrer"
                 className="group"
                 title="Open in Jira"
+                tabIndex={0}
+                onPointerDown={e => e.stopPropagation()}
               >
                 <Badge className="!px-2 !py-1 border-indigo-300 text-indigo-700 bg-indigo-50 group-hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700 text-xs">
                   <LinkIcon className="h-3 w-3" /> {task.jiraKey}
