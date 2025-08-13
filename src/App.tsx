@@ -1,3 +1,4 @@
+import { arrayMove } from "./utils/arrayMove";
 import React, { useEffect, useMemo, useState } from "react";
 import { fetchTasks, createTask, updateTask, deleteTask } from "./utils/api";
 import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
@@ -75,6 +76,7 @@ export default function App() {
 
   // Drag state for overlay
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
   const [isDropAnimating, setIsDropAnimating] = useState(false);
   const activeTask = activeId ? tasks.find(t => (t._id || t.id) === activeId) : null;
 
@@ -127,13 +129,57 @@ export default function App() {
 
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
+    setOverId(event.active.id);
     setIsDropAnimating(false);
+  };
+
+  const handleDragOver = (event: any) => {
+    const { active, over } = event;
+    if (!over) return;
+    setOverId(over.id);
+    if (active.id === over.id) return;
+    setTasks((prev) => {
+      const activeIndex = prev.findIndex((t) => (t._id || t.id) === active.id);
+      const overIndex = prev.findIndex((t) => (t._id || t.id) === over.id);
+      if (activeIndex === -1 || overIndex === -1) return prev;
+      const activeTask = prev[activeIndex];
+      const overTask = prev[overIndex];
+      if (!activeTask || !overTask) return prev;
+      // If dragging within the same column
+      if (activeTask.status === overTask.status) {
+        // Only reorder within the same column
+        const columnTasks = prev.filter(t => t.status === activeTask.status);
+        const columnTaskIds = columnTasks.map(t => t._id || t.id);
+        const oldColIndex = columnTaskIds.indexOf(active.id);
+        const newColIndex = columnTaskIds.indexOf(over.id);
+        if (oldColIndex === -1 || newColIndex === -1) return prev;
+        const newColumnTasks = arrayMove(columnTasks, oldColIndex, newColIndex);
+        // Replace the column in the full tasks array
+        let result = prev.map(t => t.status === activeTask.status ? newColumnTasks.shift()! : t);
+        return result;
+      } else {
+        // Dragging to a new column: remove from source, insert into target column at hovered position
+        const sourceCol = activeTask.status;
+        const targetCol = overTask.status;
+        const newActiveTask = { ...activeTask, status: targetCol };
+        // Remove from source
+        const newTasks = prev.filter(t => (t._id || t.id) !== active.id);
+        // Find where to insert in target column
+        let insertIdx = newTasks.findIndex((t, idx) => t.status === targetCol && (t._id || t.id) === over.id);
+        if (insertIdx === -1) insertIdx = newTasks.length;
+        // Insert into newTasks
+        const before = newTasks.slice(0, insertIdx);
+        const after = newTasks.slice(insertIdx);
+        return [...before, newActiveTask, ...after];
+      }
+    });
   };
 
   const handleDragEnd = async (event: any) => {
     setIsDropAnimating(true);
     setTimeout(() => {
       setActiveId(null);
+      setOverId(null);
       setIsDropAnimating(false);
     }, 220); // match dropAnimation duration
     const { active, over } = event;
@@ -300,7 +346,7 @@ export default function App() {
               />
             </div>
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+            <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 flex-1 overflow-x-auto pb-4"> 
                 {filteredColumns.map((col: any) => ( 
                   <div key={col.id} className="flex flex-col min-w-[280px] sm:min-w-0"> 
@@ -313,6 +359,8 @@ export default function App() {
                       onDelete={(id: string) => setTasks(prev => prev.filter(t => (t._id || t.id) !== id))}
                       onTaskUpdate={handleTaskUpdate}
                       hideTaskId={isDropAnimating ? activeId : null}
+                      activeId={activeId}
+                      overId={isDropAnimating ? null : overId}
                     /> 
                   </div> 
                 ))} 

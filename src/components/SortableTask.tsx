@@ -102,6 +102,7 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
   }
   return (
     <motion.div
+      ref={isOverlay ? undefined : setNodeRef}
       layout
       style={style}
       initial={isOverlay ? { scale: 1.05, opacity: 0.95, boxShadow: '0 12px 40px 0 rgba(31,38,135,0.3)' } : false}
@@ -111,15 +112,13 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
         ? { scale: 1.04, opacity: 0.96, rotate: 2, boxShadow: '0 12px 40px 0 rgba(31,38,135,0.25), 0 2px 8px 0 rgba(0,0,0,0.10)' }
         : { scale: 1, opacity: 1, rotate: 0, boxShadow: '0 2px 8px 0 rgba(0,0,0,0.06)' }
       }
-      transition={isOverlay
-        ? { type: 'spring', stiffness: 400, damping: 25, mass: 1 }
-        : isDragging
-        ? { type: 'spring', stiffness: 350, damping: 22, mass: 1 }
-        : { duration: 0.2, ease: 'easeOut' }}
+      transition={{
+        layout: { type: 'spring', stiffness: 500, damping: 30, mass: 1 },
+        default: { duration: 0.2, ease: 'easeOut' },
+      }}
     >
       <Card
-        ref={isOverlay ? undefined : setNodeRef}
-  className={`relative flex select-none flex-row items-start gap-3 rounded-2xl border border-zinc-200 bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 shadow-lg px-4 py-3 transition-all duration-150 ${isDragging ? "ring-2 ring-indigo-400 scale-[1.02]" : "hover:shadow-xl"} cursor-grab active:cursor-grabbing`}
+        className={`relative flex select-none flex-row items-start gap-3 rounded-2xl border border-zinc-200 bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 shadow-lg px-4 py-3 transition-all duration-150 ${isDragging ? "ring-2 ring-indigo-400 scale-[1.02]" : "hover:shadow-xl"} cursor-grab active:cursor-grabbing`}
         style={style}
         {...attributes}
         {...listeners}
