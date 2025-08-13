@@ -1,3 +1,93 @@
+/* Glassy, column-matching custom scrollbars for Kanban columns (light mode) */
+.todo-column.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: linear-gradient(120deg, rgba(226,232,240,0.7) 40%, rgba(199,210,254,0.7) 100%);
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.25);
+  box-shadow: 0 2px 8px 0 rgba(129,140,248,0.10);
+  backdrop-filter: blur(8px) saturate(160%);
+}
+.inprogress-column.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: linear-gradient(120deg, rgba(191,219,254,0.7) 40%, rgba(129,140,248,0.7) 100%);
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.25);
+  box-shadow: 0 2px 8px 0 rgba(129,140,248,0.10);
+  backdrop-filter: blur(8px) saturate(160%);
+}
+.blocker-column.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: linear-gradient(120deg, rgba(254,202,202,0.7) 40%, rgba(254,215,170,0.7) 100%);
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.25);
+  box-shadow: 0 2px 8px 0 rgba(244,63,94,0.10);
+  backdrop-filter: blur(8px) saturate(160%);
+}
+.done-column.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: linear-gradient(120deg, rgba(167,243,208,0.7) 40%, rgba(94,234,212,0.7) 100%);
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.25);
+  box-shadow: 0 2px 8px 0 rgba(16,185,129,0.10);
+  backdrop-filter: blur(8px) saturate(160%);
+}
+.todo-column.overflow-y-auto:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(120deg, rgba(226,232,240,0.95) 40%, rgba(199,210,254,0.95) 100%);
+  filter: brightness(1.08) saturate(1.15);
+}
+.inprogress-column.overflow-y-auto:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(120deg, rgba(191,219,254,0.95) 40%, rgba(129,140,248,0.95) 100%);
+  filter: brightness(1.08) saturate(1.15);
+}
+.blocker-column.overflow-y-auto:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(120deg, rgba(254,202,202,0.95) 40%, rgba(254,215,170,0.95) 100%);
+  filter: brightness(1.08) saturate(1.15);
+}
+.done-column.overflow-y-auto:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(120deg, rgba(167,243,208,0.95) 40%, rgba(94,234,212,0.95) 100%);
+  filter: brightness(1.08) saturate(1.15);
+}
+/* Hide scrollbar by default, show on hover for task columns (light mode) */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 10px;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.overflow-y-auto:hover::-webkit-scrollbar {
+  opacity: 1;
+  pointer-events: auto;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: linear-gradient(120deg, #c7d2fe 40%, #818cf8 100%);
+  border-radius: 8px;
+  min-height: 40px;
+  border: 2px solid #f1f5f9;
+  box-shadow: 0 2px 8px 0 rgba(129,140,248,0.10);
+  transition: background 0.2s;
+}
+.overflow-y-auto:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(120deg, #818cf8 0%, #6366f1 100%);
+}
+.overflow-y-auto::-webkit-scrollbar-corner {
+  background: transparent;
+}
+/* Modern custom scrollbar for task columns (light mode) */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 10px;
+  background: transparent;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: linear-gradient(120deg, #c7d2fe 40%, #818cf8 100%);
+  border-radius: 8px;
+  min-height: 40px;
+  border: 2px solid #f1f5f9;
+  box-shadow: 0 2px 8px 0 rgba(129,140,248,0.10);
+  transition: background 0.2s;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(120deg, #818cf8 0%, #6366f1 100%);
+}
+.overflow-y-auto::-webkit-scrollbar-corner {
+  background: transparent;
+}
 /* Custom dark scrollbar for columns and dropdowns */
 .dark .overflow-y-auto::-webkit-scrollbar {
   width: 8px;

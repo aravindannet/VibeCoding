@@ -1,17 +1,22 @@
+import { useState, useEffect, useMemo } from "react";
+// ...existing code...
+import Auth from "./Auth";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { arrayMove } from "./utils/arrayMove";
-import React, { useEffect, useMemo, useState } from "react";
+// ...existing code...
 import { fetchTasks, createTask, updateTask, deleteTask } from "./utils/api";
 import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import SortableTask from "./components/SortableTask";
-import { Status, Task, Priority } from "./utils/types";
+import { Status, Task, Priority, AppUser, UserRole } from "./utils/types";
 import AddTaskDialog from "./dialogs/AddTaskDialog";
 import JiraDialog from "./dialogs/JiraDialog";
 import Dialog from "./dialogs/Dialog";
 import ConfirmDialog from "./dialogs/ConfirmDialog";
+import ProfileDialog from "./dialogs/ProfileDialog";
 import Header from "./components/Header";
 import ActiveFilters from "./components/ActiveFilters";
 import TaskBoard from "./components/TaskBoard";
-import { ExternalLink, Trash2, Plus, Sun, Moon, PlugZap, Search } from "lucide-react";
+import { ExternalLink, Trash2, Plus, Sun, Moon, PlugZap, Search, LogOut } from "lucide-react";
 import Button from "./components/Button";
 import PrimaryButton from "./components/PrimaryButton";
 import Input from "./components/Input";
@@ -21,6 +26,7 @@ import TableView from "./components/TableView";
 import FloatingDatePicker from "./components/FloatingDatePicker";
 import UserFilterDropdown from "./components/UserFilterDropdown";
 import Column from "./components/Column";
+import AdminUserRoles from "./admin/AdminUserRoles";
 
 const COLUMNS = [
   { id: "todo", title: "Not Started", color: "bg-zinc-100" },
@@ -30,6 +36,8 @@ const COLUMNS = [
 ] as const;
 
 export default function App() {
+  const [adminPanelOpen, setAdminPanelOpen] = useState(false);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmType, setConfirmType] = useState<'save' | 'delete' | null>(null);
   const [dark, setDark] = useState(() => {
@@ -37,6 +45,7 @@ export default function App() {
     return saved ? saved === "1" : true; // default to dark
   });
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [userFilter, setUserFilter] = useState<string[]>([]);
   const [sheetTask, setSheetTask] = useState<Task | null>(null);
@@ -46,6 +55,39 @@ export default function App() {
   const [jiraBaseUrl, setJiraBaseUrl] = useState(() => localStorage.getItem("kanban-jira-base") || "");
   const [jiraConnected, setJiraConnected] = useState(() => !!localStorage.getItem("kanban-jira-base"));
   const [selectedDate, setSelectedDate] = useState("");
+
+  // Listen for auth state changes
+  useEffect(() => {
+    const auth = getAuth();
+    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // Fetch user info (including role) from backend
+          const res = await import('./utils/api');
+          const { getUserByUid } = res;
+          const userFromDb = await getUserByUid(firebaseUser.uid);
+          console.log('[App.tsx] Loaded user from DB:', userFromDb);
+          setUser({
+            uid: userFromDb.uid,
+            displayName: userFromDb.displayName || firebaseUser.displayName,
+            email: userFromDb.email || firebaseUser.email,
+            role: userFromDb.role,
+          });
+        } catch (err) {
+          // fallback: set user with default role if backend fails
+          setUser({
+            uid: firebaseUser.uid,
+            displayName: firebaseUser.displayName,
+            email: firebaseUser.email,
+            role: firebaseUser.email === "aravindan.net@gmail.com" ? "CFG" : "USR",
+          });
+        }
+      } else {
+        setUser(null);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -233,7 +275,8 @@ export default function App() {
       // Remove id before sending to backend
       const { id, ...taskData } = task;
       // Ensure status is set to 'todo' if not present
-      const newTaskData = { status: 'todo', ...taskData };
+      // Set owner to current user's displayName if not provided
+      const newTaskData = { status: 'todo', owner: user.displayName || '', ...taskData };
       const newTask = await createTask(newTaskData);
       console.log('Backend response for new task:', newTask);
       setTasks((prev) => [newTask, ...prev]);
@@ -259,14 +302,73 @@ export default function App() {
 
   const filteredColumns = COLUMNS.map((c) => ({ ...c, tasks: (columns as any)[c.id] as Task[] }));
 
+  if (!user) {
+    return <Auth onAuth={setUser} />;
+  }
+
   return (
     <div className={`${dark ? "dark" : ""}`}> 
+      {/* Header: Logo, displayName, sign out icon */}
+      <div className="absolute top-4 left-4 z-50 flex items-center gap-3">
+        <Logo />
+  <span className="flex items-center gap-2 px-3 py-1 rounded-xl bg-white/70 dark:bg-zinc-800/70 shadow text-zinc-700 dark:text-zinc-100 font-semibold text-base">
+          {user?.role === 'CFG' && (
+            <button
+              onClick={() => setAdminPanelOpen(true)}
+              title="Manage User Roles"
+              className="ml-1 p-1 rounded-full hover:bg-indigo-100 dark:hover:bg-zinc-700 transition border border-indigo-200 dark:border-indigo-700"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600 dark:text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            </button>
+          )}
+      {adminPanelOpen && user?.role === 'CFG' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-4 max-w-2xl w-full relative">
+            <button
+              onClick={() => setAdminPanelOpen(false)}
+              className="absolute top-2 right-2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 text-xl"
+              title="Close"
+            >
+              &times;
+            </button>
+            <AdminUserRoles currentUser={user} onClose={() => setAdminPanelOpen(false)} />
+          </div>
+        </div>
+      )}
+          {user?.displayName && user.displayName.trim() !== '' ? user.displayName : (user?.email || 'Account')}
+          <span className="ml-2 px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-800 text-xs font-bold text-indigo-700 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-700">
+            {user?.role === 'CFG' ? 'CFG' : user?.role === 'USR' ? 'User' : user?.role}
+          </span>
+          <button
+            onClick={() => setProfileOpen(true)}
+            title="Edit Profile"
+            className="ml-1 p-1 rounded-full hover:bg-indigo-100 dark:hover:bg-zinc-700 transition"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500 dark:text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3zm-2 6h12" /></svg>
+          </button>
+          <button
+            onClick={() => signOut(getAuth())}
+            title="Sign Out"
+            className="ml-1 p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+          >
+            <LogOut className="h-5 w-5 text-zinc-500 dark:text-zinc-300" />
+          </button>
+        </span>
+        <ProfileDialog
+          user={user}
+          open={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          onProfileUpdate={(updatedUser) => {
+            setUser(updatedUser);
+            setTasks(prev => prev.map(t => t.owner === user.displayName ? { ...t, owner: updatedUser.displayName } : t));
+          }}
+        />
+      </div>
       <div className="min-h-screen bg-gradient-to-b from-zinc-100 to-zinc-200 p-2 sm:p-4 md:p-6 dark:from-zinc-950 dark:to-zinc-900 overflow-x-hidden">
         <div className="mx-auto max-w-7xl h-full flex flex-col"> 
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <Logo />
-            </div>
+            {/* Logo and user info are now in the floating header, so this is empty for layout spacing */}
+            <div />
             <div className="flex flex-wrap items-center gap-2">
               <div className="w-full sm:w-auto flex flex-wrap items-center gap-2">
                 <FloatingDatePicker
@@ -523,6 +625,7 @@ export default function App() {
             setAddOpen={setAddOpen}
             addTask={addTask}
             jiraBaseUrl={jiraBaseUrl}
+            user={user}
           />
           <JiraDialog
             jiraOpen={jiraOpen}

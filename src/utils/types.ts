@@ -1,3 +1,10 @@
+export type UserRole = "CFG" | "USR";
+export type AppUser = {
+  uid: string;
+  displayName?: string;
+  email?: string;
+  role: UserRole;
+};
 export type Status = "todo" | "inprogress" | "blocker" | "done";
 export type Priority = "Low" | "Medium" | "High";
 export type Task = {
