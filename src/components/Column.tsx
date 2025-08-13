@@ -4,7 +4,7 @@ import DroppableColumn from "./DroppableColumn";
 import SortableTask from "./SortableTask";
 import { Task } from "../utils/types";
 
-const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate }: any) => {
+const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate, hideTaskId }: any) => {
   const count = tasks.length;
   // Shrink cards if more than 7 and less than or equal to 10 tasks
   const shrinkCards = tasks.length > 3 && tasks.length <= 10;
@@ -43,19 +43,22 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate }: 
         hover:shadow-[0_0_25px_rgba(99,102,241,0.3),inset_0_0_60px_rgba(99,102,241,0.15)] 
         hover:border-opacity-50 hover:bg-opacity-100
         dark:hover:shadow-[0_0_25px_rgba(99,102,241,0.2),inset_0_0_60px_rgba(99,102,241,0.1)]`}> 
-        {tasks.map((task: Task) => (
-          <div className="mb-4 last:mb-0 flex justify-center">
-            <div className="w-full max-w-xl">
-              <SortableTask 
-                key={task._id || task.id} 
-                task={task} 
-                onInspect={onInspect} 
-                onDelete={onDelete} 
-                onUpdate={onTaskUpdate}
-              />
+        {tasks.map((task: Task) => {
+          const taskId = task._id || task.id;
+          if (hideTaskId && hideTaskId === taskId) return null;
+          return (
+            <div className="mb-4 last:mb-0 flex justify-center" key={taskId}>
+              <div className="w-full max-w-xl">
+                <SortableTask 
+                  task={task} 
+                  onInspect={onInspect} 
+                  onDelete={onDelete} 
+                  onUpdate={onTaskUpdate}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </DroppableColumn>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { fetchTasks, createTask, updateTask, deleteTask } from "./utils/api";
 import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import SortableTask from "./components/SortableTask";
 import { Status, Task, Priority } from "./utils/types";
 import AddTaskDialog from "./dialogs/AddTaskDialog";
 import JiraDialog from "./dialogs/JiraDialog";
@@ -72,6 +73,11 @@ export default function App() {
     })
   );
 
+  // Drag state for overlay
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [isDropAnimating, setIsDropAnimating] = useState(false);
+  const activeTask = activeId ? tasks.find(t => (t._id || t.id) === activeId) : null;
+
   // Get unique users for filter dropdown
   const users = Array.from(new Set(tasks.map(t => t.owner).filter(Boolean)));
 
@@ -119,7 +125,17 @@ export default function App() {
     return byCol;
   }, [tasks, query, userFilter, selectedDate]);
 
+  const handleDragStart = (event: any) => {
+    setActiveId(event.active.id);
+    setIsDropAnimating(false);
+  };
+
   const handleDragEnd = async (event: any) => {
+    setIsDropAnimating(true);
+    setTimeout(() => {
+      setActiveId(null);
+      setIsDropAnimating(false);
+    }, 220); // match dropAnimation duration
     const { active, over } = event;
     if (!over) return;
     const activeTask = tasks.find((t) => (t._id || t.id) === active.id);
@@ -135,14 +151,15 @@ export default function App() {
     }
 
     if (destColumn && activeTask.status !== destColumn) {
-      // Update status in backend and frontend
+      // Optimistically update UI
       const updateId = activeTask._id || activeTask.id;
       if (!updateId) {
         console.warn('Skipping update: task has no _id or id', activeTask);
         return;
       }
+      setTasks((prev) => prev.map((t) => ((t._id || t.id) === updateId ? { ...t, status: destColumn } : t)));
+      // Update backend in background
       try {
-        console.log('Updating task with ID:', updateId);
         const updated = { ...activeTask, status: destColumn };
         const savedTask = await updateTask(updateId, updated);
         setTasks((prev) => prev.map((t) => ((t._id || t.id) === savedTask._id ? savedTask : t)));
@@ -283,7 +300,7 @@ export default function App() {
               />
             </div>
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}> 
+            <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 flex-1 overflow-x-auto pb-4"> 
                 {filteredColumns.map((col: any) => ( 
                   <div key={col.id} className="flex flex-col min-w-[280px] sm:min-w-0"> 
@@ -295,11 +312,22 @@ export default function App() {
                       onInspect={setSheetTask} 
                       onDelete={(id: string) => setTasks(prev => prev.filter(t => (t._id || t.id) !== id))}
                       onTaskUpdate={handleTaskUpdate}
+                      hideTaskId={isDropAnimating ? activeId : null}
                     /> 
                   </div> 
                 ))} 
               </div> 
-              <DragOverlay /> 
+              <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
+                {activeTask && (
+                  <SortableTask
+                    task={activeTask}
+                    onInspect={() => {}}
+                    onDelete={() => {}}
+                    onUpdate={() => {}}
+                    dragOverlay={true}
+                  />
+                )}
+              </DragOverlay>
             </DndContext> 
           )}
 

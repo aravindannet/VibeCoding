@@ -79,23 +79,43 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
   const style = isOverlay
     ? {
         transform: CSS.Transform.toString(transform),
-        transition: 'transform 200ms ease-in-out',
+        transition: 'transform 200ms cubic-bezier(0.22, 1, 0.36, 1)',
+      }
+    : isDragging && !isOverlay
+    ? {
+        display: 'none',
       }
     : {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.9 : 1,
-        scale: isDragging ? 1.02 : 1,
-        zIndex: isDragging ? 999 : 0,
+        opacity: 1,
+        filter: 'none',
+        scale: 1,
+        rotate: 0,
+        boxShadow: '0 2px 8px 0 rgba(0,0,0,0.06)',
+        zIndex: 0,
       };
 
+  // Restore point: original card is hidden while dragging (not rendered)
+  if (isDragging && !isOverlay) {
+    return null;
+  }
   return (
     <motion.div
       layout
       style={style}
       initial={isOverlay ? { scale: 1.05, opacity: 0.95, boxShadow: '0 12px 40px 0 rgba(31,38,135,0.3)' } : false}
-      animate={isOverlay ? { scale: 1.05, opacity: 1, boxShadow: '0 20px 60px 0 rgba(31,38,135,0.35)', ...(transform?.toString().includes('rotate') ? { rotateZ: 0 } : {}) } : undefined}
-      transition={isOverlay ? { type: 'spring', stiffness: 400, damping: 25, mass: 1 } : { duration: 0.2, ease: 'easeOut' }}
+      animate={isOverlay
+        ? { scale: 1.05, opacity: 1, boxShadow: '0 20px 60px 0 rgba(31,38,135,0.35)', rotate: 0 }
+        : isDragging
+        ? { scale: 1.04, opacity: 0.96, rotate: 2, boxShadow: '0 12px 40px 0 rgba(31,38,135,0.25), 0 2px 8px 0 rgba(0,0,0,0.10)' }
+        : { scale: 1, opacity: 1, rotate: 0, boxShadow: '0 2px 8px 0 rgba(0,0,0,0.06)' }
+      }
+      transition={isOverlay
+        ? { type: 'spring', stiffness: 400, damping: 25, mass: 1 }
+        : isDragging
+        ? { type: 'spring', stiffness: 350, damping: 22, mass: 1 }
+        : { duration: 0.2, ease: 'easeOut' }}
     >
       <Card
         ref={isOverlay ? undefined : setNodeRef}
