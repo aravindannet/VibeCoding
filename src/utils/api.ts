@@ -8,8 +8,8 @@ export async function upsertUser(user) {
 }
 // API utility for Kanban tasks
 
-//const API_URL = 'http://localhost:5000/api'; // Use local backend for development
-const API_URL = 'https://vibecoding-wd29.onrender.com/api'; // Use this for production
+// Use environment variable for API URL, fallback to production if not set
+const API_URL = import.meta.env.VITE_API_URL || 'https://vibecoding-wd29.onrender.com/api';
 import axios from 'axios';
 export async function fetchTasks() {
   const res = await axios.get(`${API_URL}/tasks`);
