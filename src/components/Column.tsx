@@ -10,7 +10,12 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate, hi
   // Shrink cards if more than 7 and less than or equal to 10 tasks
   const shrinkCards = tasks.length > 3 && tasks.length <= 10;
   // Always enforce max height and scroll for overflow
-  const columnScrollClass = 'overflow-y-auto max-h-[400px] sm:max-h-[520px]';
+  const columnScrollClass = `overflow-y-auto max-h-[400px] sm:max-h-[520px] ${
+    id === 'todo' ? 'todo-column' :
+    id === 'inprogress' ? 'inprogress-column' :
+    id === 'blocker' ? 'blocker-column' :
+    id === 'done' ? 'done-column' : ''
+  }`;
   return (
     <div className="flex h-full min-h-[460px] flex-col">
       <div className="mb-3 flex items-center justify-between">
@@ -70,13 +75,11 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate, hi
                   </motion.div>
                 )}
                 <motion.div 
-                  layout 
                   className="mb-4 last:mb-0 flex justify-center"
                   animate={{
                     marginBottom: isDropTarget ? 32 : 16, // 32px = 2rem generous gap
                     transition: { type: 'spring', stiffness: 300, damping: 30 }
                   }}
-                  style={{ marginBottom: undefined }}
                 >
                   <div className="w-full max-w-xl">
                     <SortableTask 
