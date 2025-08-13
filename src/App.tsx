@@ -1,6 +1,8 @@
+import { arrayMove } from "./utils/arrayMove";
 import React, { useEffect, useMemo, useState } from "react";
-import { ThemeWrapper } from "./theme/ThemeWrapper";
+import { fetchTasks, createTask, updateTask, deleteTask } from "./utils/api";
 import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import SortableTask from "./components/SortableTask";
 import { Status, Task, Priority } from "./utils/types";
 import AddTaskDialog from "./dialogs/AddTaskDialog";
 import JiraDialog from "./dialogs/JiraDialog";
@@ -31,10 +33,7 @@ export default function App() {
     const saved = localStorage.getItem("kanban-dark");
     return saved ? saved === "1" : true; // default to dark
   });
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    const saved = localStorage.getItem("kanban-tasks-v2");
-    return saved ? JSON.parse(saved) as Task[] : [];
-  });
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [query, setQuery] = useState("");
   const [userFilter, setUserFilter] = useState<string[]>([]);
   const [sheetTask, setSheetTask] = useState<Task | null>(null);
@@ -49,9 +48,18 @@ export default function App() {
     localStorage.setItem("kanban-dark", dark ? "1" : "0");
   }, [dark]);
 
+  // Load tasks from backend on mount
   useEffect(() => {
-    localStorage.setItem("kanban-tasks-v2", JSON.stringify(tasks));
-  }, [tasks]);
+    async function loadTasks() {
+      try {
+        const data = await fetchTasks();
+        setTasks(data);
+      } catch (err) {
+        console.error("Failed to load tasks", err);
+      }
+    }
+    loadTasks();
+  }, []);
   useEffect(() => {
     if (jiraBaseUrl) localStorage.setItem("kanban-jira-base", jiraBaseUrl);
   }, [jiraBaseUrl]);
@@ -65,6 +73,12 @@ export default function App() {
       }
     })
   );
+
+  // Drag state for overlay
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const [isDropAnimating, setIsDropAnimating] = useState(false);
+  const activeTask = activeId ? tasks.find(t => (t._id || t.id) === activeId) : null;
 
   // Get unique users for filter dropdown
   const users = Array.from(new Set(tasks.map(t => t.owner).filter(Boolean)));
@@ -104,15 +118,73 @@ export default function App() {
       }
       
       return passesUserFilter && passesSearchFilter && passesDateFilter;
-    }).forEach((t) => byCol[t.status].push(t));
+    }).forEach((t) => {
+      if (byCol[t.status]) {
+        byCol[t.status].push(t);
+      }
+    });
     
     return byCol;
   }, [tasks, query, userFilter, selectedDate]);
 
-  const handleDragEnd = (event: any) => {
+  const handleDragStart = (event: any) => {
+    setActiveId(event.active.id);
+    setOverId(event.active.id);
+    setIsDropAnimating(false);
+  };
+
+  const handleDragOver = (event: any) => {
     const { active, over } = event;
     if (!over) return;
-    const activeTask = tasks.find((t) => t.id === active.id);
+    setOverId(over.id);
+    if (active.id === over.id) return;
+    setTasks((prev) => {
+      const activeIndex = prev.findIndex((t) => (t._id || t.id) === active.id);
+      const overIndex = prev.findIndex((t) => (t._id || t.id) === over.id);
+      if (activeIndex === -1 || overIndex === -1) return prev;
+      const activeTask = prev[activeIndex];
+      const overTask = prev[overIndex];
+      if (!activeTask || !overTask) return prev;
+      // If dragging within the same column
+      if (activeTask.status === overTask.status) {
+        // Only reorder within the same column
+        const columnTasks = prev.filter(t => t.status === activeTask.status);
+        const columnTaskIds = columnTasks.map(t => t._id || t.id);
+        const oldColIndex = columnTaskIds.indexOf(active.id);
+        const newColIndex = columnTaskIds.indexOf(over.id);
+        if (oldColIndex === -1 || newColIndex === -1) return prev;
+        const newColumnTasks = arrayMove(columnTasks, oldColIndex, newColIndex);
+        // Replace the column in the full tasks array
+        let result = prev.map(t => t.status === activeTask.status ? newColumnTasks.shift()! : t);
+        return result;
+      } else {
+        // Dragging to a new column: remove from source, insert into target column at hovered position
+        const sourceCol = activeTask.status;
+        const targetCol = overTask.status;
+        const newActiveTask = { ...activeTask, status: targetCol };
+        // Remove from source
+        const newTasks = prev.filter(t => (t._id || t.id) !== active.id);
+        // Find where to insert in target column
+        let insertIdx = newTasks.findIndex((t, idx) => t.status === targetCol && (t._id || t.id) === over.id);
+        if (insertIdx === -1) insertIdx = newTasks.length;
+        // Insert into newTasks
+        const before = newTasks.slice(0, insertIdx);
+        const after = newTasks.slice(insertIdx);
+        return [...before, newActiveTask, ...after];
+      }
+    });
+  };
+
+  const handleDragEnd = async (event: any) => {
+    setIsDropAnimating(true);
+    setTimeout(() => {
+      setActiveId(null);
+      setOverId(null);
+      setIsDropAnimating(false);
+    }, 220); // match dropAnimation duration
+    const { active, over } = event;
+    if (!over) return;
+    const activeTask = tasks.find((t) => (t._id || t.id) === active.id);
     if (!activeTask) return;
 
     const overId = over.id as string;
@@ -120,32 +192,71 @@ export default function App() {
     let destColumn: Status | null = null;
     if (isColumn) destColumn = overId as Status;
     else {
-      const overTask = tasks.find((t) => t.id === overId);
+      const overTask = tasks.find((t) => (t._id || t.id) === overId);
       destColumn = (overTask?.status || activeTask.status) as Status;
     }
 
     if (destColumn && activeTask.status !== destColumn) {
-      setTasks((prev) => prev.map((t) => (t.id === activeTask.id ? { ...t, status: destColumn as Status } : t)));
+      // Optimistically update UI
+      const updateId = activeTask._id || activeTask.id;
+      if (!updateId) {
+        console.warn('Skipping update: task has no _id or id', activeTask);
+        return;
+      }
+      setTasks((prev) => prev.map((t) => ((t._id || t.id) === updateId ? { ...t, status: destColumn } : t)));
+      // Update backend in background
+      try {
+        const updated = { ...activeTask, status: destColumn };
+        const savedTask = await updateTask(updateId, updated);
+        setTasks((prev) => prev.map((t) => ((t._id || t.id) === savedTask._id ? savedTask : t)));
+      } catch (err) {
+        console.error('Failed to move task:', err);
+      }
     }
   };
 
-  const onDelete = (id: string) => setTasks((prev) => prev.filter((t) => t.id !== id));
-  const addTask = (task: Task) => {
-    setTasks((prev) => [{ ...task }, ...prev]);
-    setUserFilter([]);
-  };
-  
-  const handleTaskUpdate = (updatedTask: Task) => {
-    setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+  const onDelete = async (id: string) => {
+    try {
+      await deleteTask(id);
+      setTasks((prev) => prev.filter((t) => (t._id || t.id) !== id));
+    } catch (err) {
+      console.error("Failed to delete task", err);
+    }
   };
 
-// ...existing code...
+  const addTask = async (task: Task) => {
+    try {
+      // Remove id before sending to backend
+      const { id, ...taskData } = task;
+      // Ensure status is set to 'todo' if not present
+      const newTaskData = { status: 'todo', ...taskData };
+      const newTask = await createTask(newTaskData);
+      console.log('Backend response for new task:', newTask);
+      setTasks((prev) => [newTask, ...prev]);
+      setUserFilter([]);
+    } catch (err) {
+      console.error("Failed to add task", err);
+    }
+  };
+
+  const handleTaskUpdate = async (updatedTask: Task) => {
+    try {
+      const updateId = updatedTask._id || updatedTask.id;
+      if (!updateId) {
+        console.warn('Skipping update: task has no _id or id', updatedTask);
+        return;
+      }
+      const savedTask = await updateTask(updateId, updatedTask);
+      setTasks((prev) => prev.map((t) => ((t._id || t.id) === savedTask._id ? savedTask : t)));
+    } catch (err) {
+      console.error("Failed to update task", err);
+    }
+  };
 
   const filteredColumns = COLUMNS.map((c) => ({ ...c, tasks: (columns as any)[c.id] as Task[] }));
 
   return (
-    <ThemeWrapper>
-      <div className={`${dark ? "dark" : ""}`}> 
+    <div className={`${dark ? "dark" : ""}`}> 
       <div className="min-h-screen bg-gradient-to-b from-zinc-100 to-zinc-200 p-2 sm:p-4 md:p-6 dark:from-zinc-950 dark:to-zinc-900 overflow-x-hidden">
         <div className="mx-auto max-w-7xl h-full flex flex-col"> 
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -231,12 +342,11 @@ export default function App() {
               <TableView
                 tasks={Object.values(columns).flat()} 
                 onInspect={setSheetTask} 
-                onDelete={(id) => setTasks(prev => prev.filter(t => t.id !== id))}
-                onUpdate={handleTaskUpdate}
+                onDelete={(id) => setTasks(prev => prev.filter(t => (t._id || t.id) !== id))} 
               />
             </div>
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}> 
+            <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 flex-1 overflow-x-auto pb-4"> 
                 {filteredColumns.map((col: any) => ( 
                   <div key={col.id} className="flex flex-col min-w-[280px] sm:min-w-0"> 
@@ -246,13 +356,26 @@ export default function App() {
                       color={col.color} 
                       tasks={col.tasks} 
                       onInspect={setSheetTask} 
-                      onDelete={(id: string) => setTasks(prev => prev.filter(t => t.id !== id))}
+                      onDelete={(id: string) => setTasks(prev => prev.filter(t => (t._id || t.id) !== id))}
                       onTaskUpdate={handleTaskUpdate}
+                      hideTaskId={isDropAnimating ? activeId : null}
+                      activeId={activeId}
+                      overId={isDropAnimating ? null : overId}
                     /> 
                   </div> 
                 ))} 
               </div> 
-              <DragOverlay /> 
+              <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
+                {activeTask && (
+                  <SortableTask
+                    task={activeTask}
+                    onInspect={() => {}}
+                    onDelete={() => {}}
+                    onUpdate={() => {}}
+                    dragOverlay={true}
+                  />
+                )}
+              </DragOverlay>
             </DndContext> 
           )}
 
@@ -267,7 +390,7 @@ export default function App() {
                         value={sheetTask.status}
                         onChange={(e) => {
                           const status = e.target.value as Status;
-                          setTasks((prev) => prev.map((t) => (t.id === sheetTask.id ? { ...t, status } : t)));
+                          setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, status } : t)));
                           setSheetTask((s: any) => ({ ...s, status }));
                         }}
                         className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100"
@@ -286,7 +409,7 @@ export default function App() {
                         value={sheetTask.priority || "Medium"}
                         onChange={(e) => {
                           const priority = e.target.value as Priority;
-                          setTasks((prev) => prev.map((t) => (t.id === sheetTask.id ? { ...t, priority } : t)));
+                          setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, priority } : t)));
                           setSheetTask((s: any) => ({ ...s, priority }));
                         }}
                         className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100"
@@ -304,7 +427,7 @@ export default function App() {
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Owner</div>
                     <Input value={sheetTask.owner || ""} onChange={(e: any) => {
                       const owner = e.target.value;
-                      setTasks((prev) => prev.map((t) => (t.id === sheetTask.id ? { ...t, owner } : t)));
+                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, owner } : t)));
                       setSheetTask((s: any) => ({ ...s, owner }));
                     }} />
                   </div>
@@ -312,7 +435,7 @@ export default function App() {
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Jira Issue Key</div>
                     <Input value={sheetTask.jiraKey || ""} onChange={(e: any) => {
                       const jiraKey = e.target.value.toUpperCase();
-                      setTasks((prev) => prev.map((t) => (t.id === sheetTask.id ? { ...t, jiraKey } : t)));
+                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, jiraKey } : t)));
                       setSheetTask((s: any) => ({ ...s, jiraKey }));
                     }} placeholder="e.g., ABC-123" />
                   </div>
@@ -323,7 +446,7 @@ export default function App() {
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Start</div>
                     <Input type="date" value={sheetTask.startDate || ""} onChange={(e: any) => {
                       const startDate = e.target.value;
-                      setTasks((prev) => prev.map((t) => (t.id === sheetTask.id ? { ...t, startDate } : t)));
+                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, startDate } : t)));
                       setSheetTask((s: any) => ({ ...s, startDate }));
                     }} />
                   </div>
@@ -331,7 +454,7 @@ export default function App() {
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">End</div>
                     <Input type="date" value={sheetTask.endDate || ""} onChange={(e: any) => {
                       const endDate = e.target.value;
-                      setTasks((prev) => prev.map((t) => (t.id === sheetTask.id ? { ...t, endDate } : t)));
+                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, endDate } : t)));
                       setSheetTask((s: any) => ({ ...s, endDate }));
                     }} />
                   </div>
@@ -341,7 +464,7 @@ export default function App() {
                   <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Description</div>
                   <Textarea rows={4} value={sheetTask.description || ""} onChange={(e: any) => {
                     const description = e.target.value;
-                    setTasks((prev) => prev.map((t) => (t.id === sheetTask.id ? { ...t, description } : t)));
+                    setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, description } : t)));
                     setSheetTask((s: any) => ({ ...s, description }));
                   }} />
                 </div>
@@ -365,7 +488,12 @@ export default function App() {
                     </div>
                   </div>
                   <div className="flex items-end justify-end gap-2">
-                    <PrimaryButton onClick={() => setSheetTask(null)}>Save Task</PrimaryButton>
+                    <PrimaryButton onClick={async () => {
+                      if (sheetTask) {
+                        await handleTaskUpdate(sheetTask);
+                      }
+                      setSheetTask(null);
+                    }}>Save Task</PrimaryButton>
                   </div>
                 </div>
 
@@ -399,6 +527,5 @@ export default function App() {
         </div>
       </div>
     </div>
-    </ThemeWrapper>
   );
 }

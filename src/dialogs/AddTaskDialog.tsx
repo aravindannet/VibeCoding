@@ -61,21 +61,8 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl }: any) => {
   }, [showDatePicker]);
 
   const submit = (e: any) => {
-    e.preventDefault();
-    const id = uuidv4();
-    addTask({
-      id,
-      name,
-      owner,
-      description,
-      startDate: dateRange.startDate.toISOString().slice(0, 10),
-      endDate: dateRange.endDate.toISOString().slice(0, 10),
-      jiraKey: jiraKey || null,
-      jiraBaseUrl: jiraBaseUrl || null,
-      status: "todo",
-      priority
-    });
-    setAddOpen(false);
+  e.preventDefault();
+  // Do nothing here, handle confirmation in button onClick
   };
 
   return (
@@ -162,7 +149,28 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl }: any) => {
         </div>
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
           <Button type="button" onClick={() => setAddOpen(false)} className="w-full sm:w-auto">Cancel</Button>
-          <PrimaryButton type="submit" className="w-full sm:w-auto"><Plus className="h-4 w-4" /> Save Task</PrimaryButton>
+          <PrimaryButton type="button" className="w-full sm:w-auto"
+            onClick={() => {
+              if (window.confirm('Are you sure you want to save this task?')) {
+                const id = uuidv4();
+                addTask({
+                  id,
+                  name,
+                  owner,
+                  description,
+                  startDate: dateRange.startDate.toISOString().slice(0, 10),
+                  endDate: dateRange.endDate.toISOString().slice(0, 10),
+                  jiraKey: jiraKey || null,
+                  jiraBaseUrl: jiraBaseUrl || null,
+                  status: "todo",
+                  priority
+                });
+                setAddOpen(false);
+              }
+            }}
+          >
+            <Plus className="h-4 w-4" /> Save Task
+          </PrimaryButton>
         </div>
       </form>
     </Dialog>

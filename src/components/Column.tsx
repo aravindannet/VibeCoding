@@ -3,8 +3,9 @@ import { motion } from "framer-motion";
 import DroppableColumn from "./DroppableColumn";
 import SortableTask from "./SortableTask";
 import { Task } from "../utils/types";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
-const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate }: any) => {
+const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate, hideTaskId, activeId, overId }: any) => {
   const count = tasks.length;
   // Shrink cards if more than 7 and less than or equal to 10 tasks
   const shrinkCards = tasks.length > 3 && tasks.length <= 10;
@@ -34,7 +35,7 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate }: 
           </motion.div>
         </div>
       </div>
-      <DroppableColumn id={id} className={`flex-1 rounded-2xl p-3 border transition-all duration-300
+  <DroppableColumn id={id} className={`flex-1 rounded-2xl p-3 border transition-all duration-300
         ${id === 'todo' ? 'border-slate-300/30 bg-gradient-to-b from-slate-50 via-indigo-50/30 to-slate-100 dark:from-slate-900 dark:via-indigo-900/20 dark:to-slate-800 shadow-[0_0_15px_rgba(99,102,241,0.2),inset_0_0_40px_rgba(99,102,241,0.1)]' : ''}
         ${id === 'inprogress' ? 'border-blue-300/30 bg-gradient-to-b from-blue-50 via-sky-100/50 to-indigo-50 dark:from-slate-900 dark:via-blue-900/30 dark:to-slate-800 shadow-[0_0_15px_rgba(59,130,246,0.2),inset_0_0_40px_rgba(59,130,246,0.1)]' : ''}
         ${id === 'blocker' ? 'border-rose-300/30 bg-gradient-to-b from-rose-50 via-red-50/50 to-orange-50 dark:from-slate-900 dark:via-rose-900/20 dark:to-slate-800 shadow-[0_0_15px_rgba(244,63,94,0.2),inset_0_0_40px_rgba(244,63,94,0.1)]' : ''}
@@ -42,17 +43,54 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate }: 
         ${columnScrollClass} backdrop-blur-lg backdrop-saturate-150 bg-opacity-95 
         hover:shadow-[0_0_25px_rgba(99,102,241,0.3),inset_0_0_60px_rgba(99,102,241,0.15)] 
         hover:border-opacity-50 hover:bg-opacity-100
-        dark:hover:shadow-[0_0_25px_rgba(99,102,241,0.2),inset_0_0_60px_rgba(99,102,241,0.1)]`}> 
-        {tasks.map((task: Task) => (
-          <SortableTask 
-            key={task.id} 
-            task={task} 
-            onInspect={onInspect} 
-            onDelete={onDelete} 
-            onUpdate={onTaskUpdate}
-            shrink={shrinkCards} 
-          />
-        ))}
+        dark:hover:shadow-[0_0_25px_rgba(99,102,241,0.2),inset_0_0_60px_rgba(99,102,241,0.1)]`}>
+        <SortableContext items={tasks.map((task: Task) => task._id || task.id)} strategy={verticalListSortingStrategy}>
+          {tasks.map((task: Task, idx: number) => {
+            const taskId = task._id || task.id;
+            if (hideTaskId && hideTaskId === taskId) return null;
+
+            // Determine if this is the position where the dragged card would be inserted
+            const isDropTarget = overId && overId === taskId && activeId !== overId;
+
+            return (
+              <React.Fragment key={taskId}>
+                {isDropTarget && (
+                  <motion.div
+                    layout
+                    className="mb-4 last:mb-0 flex justify-center"
+                    style={{ pointerEvents: 'none' }}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 72, marginBottom: 32 }} // 72px = generous space
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  >
+                    <div className="w-full max-w-xl bg-indigo-100/60 dark:bg-indigo-900/40 rounded-2xl border-2 border-dashed border-indigo-400 h-16 flex items-center justify-center text-indigo-500 font-bold text-lg opacity-80">
+                      Drop here
+                    </div>
+                  </motion.div>
+                )}
+                <motion.div 
+                  layout 
+                  className="mb-4 last:mb-0 flex justify-center"
+                  animate={{
+                    marginBottom: isDropTarget ? 32 : 16, // 32px = 2rem generous gap
+                    transition: { type: 'spring', stiffness: 300, damping: 30 }
+                  }}
+                  style={{ marginBottom: undefined }}
+                >
+                  <div className="w-full max-w-xl">
+                    <SortableTask 
+                      task={task} 
+                      onInspect={onInspect} 
+                      onDelete={onDelete} 
+                      onUpdate={onTaskUpdate}
+                    />
+                  </div>
+                </motion.div>
+              </React.Fragment>
+            );
+          })}
+        </SortableContext>
       </DroppableColumn>
     </div>
   );
