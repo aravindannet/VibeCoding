@@ -16,12 +16,12 @@ import { Plus } from "lucide-react";
 import { Priority } from "../utils/types";
 import { v4 as uuidv4 } from "uuid";
 
-const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl }: any) => {
+const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl, user }: any) => {
   // Reset form when dialog opens
   useEffect(() => {
     if (addOpen) {
       setName("");
-      setOwner("");
+      setOwner(user?.displayName || "");
       setDescription("");
       setDateRange({
         startDate: new Date(),
@@ -32,7 +32,7 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl }: any) => {
       setPriority("Medium");
       setShowDatePicker(false);
     }
-  }, [addOpen]);
+  }, [addOpen, user]);
   const portalRoot = typeof window !== 'undefined' ? document.body : null;
   const dateBtnRef = React.useRef<HTMLButtonElement>(null);
   const pickerRef = React.useRef<HTMLDivElement>(null);
