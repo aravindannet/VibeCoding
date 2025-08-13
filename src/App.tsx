@@ -6,7 +6,7 @@ import SortableTask from "./components/SortableTask";
 import { Status, Task, Priority } from "./utils/types";
 import AddTaskDialog from "./dialogs/AddTaskDialog";
 import JiraDialog from "./dialogs/JiraDialog";
-import Sheet from "./dialogs/Sheet";
+import Dialog from "./dialogs/Dialog";
 import ConfirmDialog from "./dialogs/ConfirmDialog";
 import Header from "./components/Header";
 import ActiveFilters from "./components/ActiveFilters";
@@ -360,7 +360,11 @@ export default function App() {
                       color={col.color} 
                       tasks={col.tasks} 
                       onInspect={setSheetTask} 
-                      onDelete={(id: string) => setTasks(prev => prev.filter(t => (t._id || t.id) !== id))}
+                      onDelete={(task) => {
+                        setPendingTask(task);
+                        setConfirmType('delete');
+                        setConfirmOpen(true);
+                      }}
                       onTaskUpdate={handleTaskUpdate}
                       hideTaskId={isDropAnimating ? activeId : null}
                       activeId={activeId}
@@ -383,9 +387,9 @@ export default function App() {
             </DndContext> 
           )}
 
-          <Sheet open={!!sheetTask} onClose={() => setSheetTask(null)} title={sheetTask?.name || "Task"}>
+          <Dialog open={!!sheetTask} onClose={() => setSheetTask(null)} title={sheetTask?.name || "Edit Task"}>
             {sheetTask && (
-              <div className="space-y-4">
+              <form className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Status</div>
@@ -492,7 +496,7 @@ export default function App() {
                     </div>
                   </div>
                   <div className="flex items-end justify-end gap-2">
-                    <PrimaryButton onClick={() => {
+                    <PrimaryButton type="button" onClick={() => {
                       setPendingTask(sheetTask);
                       setConfirmType('save');
                       setConfirmOpen(true);
@@ -501,7 +505,7 @@ export default function App() {
                 </div>
 
                 <div className="flex justify-between pt-2">
-                  <Button onClick={() => {
+                  <Button type="button" onClick={() => {
                     setPendingTask(sheetTask);
                     setConfirmType('delete');
                     setConfirmOpen(true);
@@ -510,29 +514,9 @@ export default function App() {
                   </Button>
                   <Button onClick={() => setSheetTask(null)}>Close</Button>
                 </div>
-      <ConfirmDialog
-        open={confirmOpen}
-        title={confirmType === 'delete' ? 'Delete Task?' : 'Save Task?'}
-        message={confirmType === 'delete' ? 'Are you sure you want to delete this task? This action cannot be undone.' : 'Are you sure you want to save changes to this task?'}
-        confirmLabel={confirmType === 'delete' ? 'Delete' : 'Save'}
-        cancelLabel="Cancel"
-        onCancel={() => { setConfirmOpen(false); setPendingTask(null); setConfirmType(null); }}
-        onConfirm={async () => {
-          setConfirmOpen(false);
-          if (confirmType === 'delete' && pendingTask) {
-            await onDelete(pendingTask._id || pendingTask.id);
-            setSheetTask(null);
-          } else if (confirmType === 'save' && pendingTask) {
-            await handleTaskUpdate(pendingTask);
-            setSheetTask(null);
-          }
-          setPendingTask(null);
-          setConfirmType(null);
-        }}
-      />
-              </div>
+              </form>
             )}
-          </Sheet>
+          </Dialog>
 
           <AddTaskDialog
             addOpen={addOpen}
@@ -553,6 +537,26 @@ export default function App() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={confirmType === 'delete' ? 'Delete Task?' : 'Save Task?'}
+        message={confirmType === 'delete' ? 'Are you sure you want to delete this task? This action cannot be undone.' : 'Are you sure you want to save changes to this task?'}
+        confirmLabel={confirmType === 'delete' ? 'Delete' : 'Save'}
+        cancelLabel="Cancel"
+        onCancel={() => { setConfirmOpen(false); setPendingTask(null); setConfirmType(null); }}
+        onConfirm={async () => {
+          setConfirmOpen(false);
+          if (confirmType === 'delete' && pendingTask) {
+            await onDelete(pendingTask._id || pendingTask.id);
+            setSheetTask(null);
+          } else if (confirmType === 'save' && pendingTask) {
+            await handleTaskUpdate(pendingTask);
+            setSheetTask(null);
+          }
+          setPendingTask(null);
+          setConfirmType(null);
+        }}
+      />
     </div>
   );
 }
