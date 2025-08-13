@@ -333,7 +333,7 @@ export default function App() {
                         value={sheetTask.priority || "Medium"}
                         onChange={(e) => {
                           const priority = e.target.value as Priority;
-                          setTasks((prev) => prev.map((t) => (t.id === sheetTask.id ? { ...t, priority } : t)));
+                          setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, priority } : t)));
                           setSheetTask((s: any) => ({ ...s, priority }));
                         }}
                         className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100"
@@ -351,7 +351,7 @@ export default function App() {
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Owner</div>
                     <Input value={sheetTask.owner || ""} onChange={(e: any) => {
                       const owner = e.target.value;
-                      setTasks((prev) => prev.map((t) => (t.id === sheetTask.id ? { ...t, owner } : t)));
+                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, owner } : t)));
                       setSheetTask((s: any) => ({ ...s, owner }));
                     }} />
                   </div>
@@ -359,7 +359,7 @@ export default function App() {
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Jira Issue Key</div>
                     <Input value={sheetTask.jiraKey || ""} onChange={(e: any) => {
                       const jiraKey = e.target.value.toUpperCase();
-                      setTasks((prev) => prev.map((t) => (t.id === sheetTask.id ? { ...t, jiraKey } : t)));
+                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, jiraKey } : t)));
                       setSheetTask((s: any) => ({ ...s, jiraKey }));
                     }} placeholder="e.g., ABC-123" />
                   </div>
@@ -388,7 +388,7 @@ export default function App() {
                   <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Description</div>
                   <Textarea rows={4} value={sheetTask.description || ""} onChange={(e: any) => {
                     const description = e.target.value;
-                    setTasks((prev) => prev.map((t) => (t.id === sheetTask.id ? { ...t, description } : t)));
+                    setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, description } : t)));
                     setSheetTask((s: any) => ({ ...s, description }));
                   }} />
                 </div>
