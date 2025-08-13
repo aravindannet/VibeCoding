@@ -174,19 +174,8 @@ export default function App() {
   }, [tasks, query, userFilter, selectedDate]);
 
   const handleDragStart = (event: any) => {
-    const taskId = event.active.id;
-    const task = tasks.find(t => (t._id || t.id) === taskId);
-    if (!task) return;
-    // Only allow drag if user is CFG or owner
-    if (user.role !== 'CFG' && task.owner !== user.displayName) {
-      // Prevent drag
-      setActiveId(null);
-      setOverId(null);
-      setIsDropAnimating(false);
-      return;
-    }
-    setActiveId(taskId);
-    setOverId(taskId);
+    setActiveId(event.active.id);
+    setOverId(event.active.id);
     setIsDropAnimating(false);
   };
 
@@ -342,7 +331,7 @@ export default function App() {
             >
               &times;
             </button>
-            <AdminUserRoles currentUser={user} />
+            <AdminUserRoles currentUser={user} onClose={() => setAdminPanelOpen(false)} />
           </div>
         </div>
       )}
