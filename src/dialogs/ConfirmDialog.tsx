@@ -21,7 +21,7 @@ const ConfirmDialog = ({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) => (
-  <Dialog open={open} onClose={onCancel} title={title}>
+  <Dialog open={open} onClose={onCancel} maxWidth="22rem">
     <div className="flex flex-col items-center justify-center gap-4">
       <div className="text-base text-center text-zinc-700 dark:text-zinc-200 mb-2">{message}</div>
       <div className="flex gap-4 mt-2">
