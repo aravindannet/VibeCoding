@@ -82,7 +82,7 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate, hi
                     <SortableTask 
                       task={task} 
                       onInspect={onInspect} 
-                      onDelete={onDelete} 
+                      onDelete={() => onDelete(task)} 
                       onUpdate={onTaskUpdate}
                     />
                   </div>

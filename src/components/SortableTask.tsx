@@ -35,7 +35,7 @@ interface Task {
 interface SortableTaskProps {
   task: Task;
   onInspect: (task: Task) => void;
-  onDelete: (id: string) => void;
+  onDelete: (task: Task) => void;
   onUpdate: (task: Task) => void;
   dragOverlay?: boolean;
 }
@@ -160,7 +160,7 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
                 onPointerDown={e => e.stopPropagation()}
                 onClick={(e) => {
                   e.preventDefault();
-                  onDelete(task._id || task.id || "");
+                  onDelete(task);
                 }}
                 tabIndex={0}
               >

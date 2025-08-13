@@ -6,7 +6,8 @@ import SortableTask from "./components/SortableTask";
 import { Status, Task, Priority } from "./utils/types";
 import AddTaskDialog from "./dialogs/AddTaskDialog";
 import JiraDialog from "./dialogs/JiraDialog";
-import Sheet from "./dialogs/Sheet";
+import Dialog from "./dialogs/Dialog";
+import ConfirmDialog from "./dialogs/ConfirmDialog";
 import Header from "./components/Header";
 import ActiveFilters from "./components/ActiveFilters";
 import TaskBoard from "./components/TaskBoard";
@@ -29,6 +30,8 @@ const COLUMNS = [
 ] as const;
 
 export default function App() {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmType, setConfirmType] = useState<'save' | 'delete' | null>(null);
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("kanban-dark");
     return saved ? saved === "1" : true; // default to dark
@@ -37,6 +40,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [userFilter, setUserFilter] = useState<string[]>([]);
   const [sheetTask, setSheetTask] = useState<Task | null>(null);
+  const [pendingTask, setPendingTask] = useState<Task | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [jiraOpen, setJiraOpen] = useState(false);
   const [jiraBaseUrl, setJiraBaseUrl] = useState(() => localStorage.getItem("kanban-jira-base") || "");
@@ -356,7 +360,11 @@ export default function App() {
                       color={col.color} 
                       tasks={col.tasks} 
                       onInspect={setSheetTask} 
-                      onDelete={(id: string) => setTasks(prev => prev.filter(t => (t._id || t.id) !== id))}
+                      onDelete={(task) => {
+                        setPendingTask(task);
+                        setConfirmType('delete');
+                        setConfirmOpen(true);
+                      }}
                       onTaskUpdate={handleTaskUpdate}
                       hideTaskId={isDropAnimating ? activeId : null}
                       activeId={activeId}
@@ -379,9 +387,9 @@ export default function App() {
             </DndContext> 
           )}
 
-          <Sheet open={!!sheetTask} onClose={() => setSheetTask(null)} title={sheetTask?.name || "Task"}>
+          <Dialog open={!!sheetTask} onClose={() => setSheetTask(null)} title={sheetTask?.name || "Edit Task"}>
             {sheetTask && (
-              <div className="space-y-4">
+              <form className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Status</div>
@@ -488,24 +496,27 @@ export default function App() {
                     </div>
                   </div>
                   <div className="flex items-end justify-end gap-2">
-                    <PrimaryButton onClick={async () => {
-                      if (sheetTask) {
-                        await handleTaskUpdate(sheetTask);
-                      }
-                      setSheetTask(null);
+                    <PrimaryButton type="button" onClick={() => {
+                      setPendingTask(sheetTask);
+                      setConfirmType('save');
+                      setConfirmOpen(true);
                     }}>Save Task</PrimaryButton>
                   </div>
                 </div>
 
                 <div className="flex justify-between pt-2">
-                  <Button onClick={() => { setTasks(prev => prev.filter(t => t.id !== (sheetTask as any).id)); setSheetTask(null); }} className="border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-700 dark:text-rose-300 dark:hover:bg-rose-900/20">
+                  <Button type="button" onClick={() => {
+                    setPendingTask(sheetTask);
+                    setConfirmType('delete');
+                    setConfirmOpen(true);
+                  }} className="border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-700 dark:text-rose-300 dark:hover:bg-rose-900/20">
                     <Trash2 className="h-4 w-4" /> Delete task
                   </Button>
                   <Button onClick={() => setSheetTask(null)}>Close</Button>
                 </div>
-              </div>
+              </form>
             )}
-          </Sheet>
+          </Dialog>
 
           <AddTaskDialog
             addOpen={addOpen}
@@ -526,6 +537,26 @@ export default function App() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={confirmType === 'delete' ? 'Delete Task?' : 'Save Task?'}
+        message={confirmType === 'delete' ? 'Are you sure you want to delete this task? This action cannot be undone.' : 'Are you sure you want to save changes to this task?'}
+        confirmLabel={confirmType === 'delete' ? 'Delete' : 'Save'}
+        cancelLabel="Cancel"
+        onCancel={() => { setConfirmOpen(false); setPendingTask(null); setConfirmType(null); }}
+        onConfirm={async () => {
+          setConfirmOpen(false);
+          if (confirmType === 'delete' && pendingTask) {
+            await onDelete(pendingTask._id || pendingTask.id);
+            setSheetTask(null);
+          } else if (confirmType === 'save' && pendingTask) {
+            await handleTaskUpdate(pendingTask);
+            setSheetTask(null);
+          }
+          setPendingTask(null);
+          setConfirmType(null);
+        }}
+      />
     </div>
   );
 }
