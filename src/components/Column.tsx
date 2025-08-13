@@ -52,7 +52,6 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate }: 
                 onInspect={onInspect} 
                 onDelete={onDelete} 
                 onUpdate={onTaskUpdate}
-                shrink={shrinkCards} 
               />
             </div>
           </div>
