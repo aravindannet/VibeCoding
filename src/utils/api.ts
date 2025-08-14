@@ -9,7 +9,11 @@ export async function upsertUser(user) {
 // API utility for Kanban tasks
 
 // Use environment variable for API URL, fallback to production if not set
-const API_URL = import.meta.env.VITE_API_URL || 'https://vibecoding-wd29.onrender.com/api';
+// Dynamic API URL: localhost for development, Render for production
+const API_URL =
+  import.meta.env.MODE === "development"
+    ? "http://localhost:5000/api"
+    : (import.meta.env.VITE_API_URL || "https://vibecoding-wd29.onrender.com/api");
 import axios from 'axios';
 export async function fetchTasks() {
   const res = await axios.get(`${API_URL}/tasks`);
