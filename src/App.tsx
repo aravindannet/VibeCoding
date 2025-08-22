@@ -5,7 +5,7 @@ import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { arrayMove } from "./utils/arrayMove";
 // ...existing code...
 import { fetchTasks, createTask, updateTask, deleteTask } from "./utils/api";
-import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor, TouchSensor } from "@dnd-kit/core";
 import SortableTask from "./components/SortableTask";
 import { Status, Task, Priority, AppUser, UserRole } from "./utils/types";
 // Kanban columns definition
@@ -57,13 +57,19 @@ export default function App() {
   const [isDropAnimating, setIsDropAnimating] = useState(false);
   const activeTask = activeId ? tasks.find(t => (t._id || t.id) === activeId) : null;
 
-  // Sensors
+  // Sensors: Enable both Pointer and Touch for desktop and mobile drag-and-drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
         tolerance: 5,
         delay: 150
+      }
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5
       }
     })
   );
@@ -259,6 +265,8 @@ export default function App() {
               dark={dark}
               setDark={setDark}
               setAddOpen={setAddOpen}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
             />
 
 

@@ -3,6 +3,7 @@ import AdminUserRoles from "../admin/AdminUserRoles";
 import ProfileDialog from "../dialogs/ProfileDialog";
 import { signOut, getAuth } from "firebase/auth";
 import { LogOut, Search, CalendarDays, Sun, Moon, Plus } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import Input from "./Input";
 import UserFilterDropdown from "./UserFilterDropdown";
 import PrimaryButton from "./PrimaryButton";
@@ -67,7 +68,27 @@ export function HeaderBar({ user, setAdminPanelOpen, adminPanelOpen, setProfileO
   );
 }
 
-export function Toolbar({ query, setQuery, users, userFilter, setUserFilter, dark, setDark, setAddOpen }) {
+export function Toolbar({ query, setQuery, users, userFilter, setUserFilter, dark, setDark, setAddOpen, selectedDate, setSelectedDate }) {
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const dateBtnRef = useRef(null);
+  const [tempDate, setTempDate] = useState(selectedDate || "");
+
+  // Close popover on outside click
+  function handleClickOutside(e) {
+    if (dateBtnRef.current && !dateBtnRef.current.contains(e.target)) {
+      setShowDatePicker(false);
+    }
+  }
+  // Attach/detach listener
+  useEffect(() => {
+    if (showDatePicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showDatePicker]);
+
   return (
     <div className="w-full sm:w-auto flex flex-wrap items-center gap-2">
       <div className="relative flex-1 sm:flex-none">
@@ -75,13 +96,45 @@ export function Toolbar({ query, setQuery, users, userFilter, setUserFilter, dar
         <Input placeholder="Search by task, owner, or JIRA key" className="pl-8 w-full" value={query} onChange={e => setQuery(e.target.value)} />
       </div>
       <UserFilterDropdown users={users} selected={userFilter} setSelected={setUserFilter} />
-      <button
-        className="p-1 rounded-full hover:bg-indigo-100 dark:hover:bg-zinc-700 transition"
-        onClick={() => alert('Date filter coming soon!')}
-        title="Filter by Date"
-      >
-        <CalendarDays className="h-6 w-6 text-blue-500" />
-      </button>
+      <div className="relative" ref={dateBtnRef}>
+        <button
+          className="p-1 rounded-full hover:bg-indigo-100 dark:hover:bg-zinc-700 transition"
+          onClick={() => setShowDatePicker(v => !v)}
+          title="Filter by Date"
+          type="button"
+        >
+          <CalendarDays className="h-6 w-6 text-blue-500" />
+        </button>
+        {showDatePicker && (
+          <div className="absolute z-50 mt-2 right-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-lg p-3 flex flex-col items-center min-w-[180px]">
+            <input
+              type="date"
+              value={tempDate}
+              onChange={e => setTempDate(e.target.value)}
+              className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 mb-2"
+            />
+            <div className="flex gap-2">
+              <button
+                className="px-3 py-1 rounded bg-indigo-500 text-white text-xs font-semibold hover:bg-indigo-600"
+                onClick={() => {
+                  setShowDatePicker(false);
+                  setSelectedDate(tempDate);
+                }}
+                type="button"
+              >Apply</button>
+              <button
+                className="px-3 py-1 rounded bg-zinc-200 text-zinc-700 text-xs font-semibold hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                onClick={() => {
+                  setShowDatePicker(false);
+                  setTempDate("");
+                  setSelectedDate("");
+                }}
+                type="button"
+              >Clear</button>
+            </div>
+          </div>
+        )}
+      </div>
       <button
         className="p-1 rounded-full hover:bg-indigo-100 dark:hover:bg-zinc-700 transition"
         onClick={() => setDark((d: boolean) => !d)}
@@ -95,3 +148,4 @@ export function Toolbar({ query, setQuery, users, userFilter, setUserFilter, dar
     </div>
   );
 }
+// ...existing code...
