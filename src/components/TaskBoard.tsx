@@ -1,5 +1,5 @@
 import React from 'react';
-import { DndContext, closestCorners, PointerSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
+import { DndContext, closestCorners, PointerSensor, TouchSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
 import Column from './Column';
 import { Task, Status } from '../utils/types';
 import { COLUMNS } from '../utils/columns';
@@ -26,6 +26,12 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         distance: 8,
         tolerance: 5,
         delay: 150
+      }
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5
       }
     })
   );

@@ -1,3 +1,13 @@
+// Helper to format date as DD-MON-YY
+function formatShortDate(dateStr?: string) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  const day = d.getDate().toString().padStart(2, '0');
+  const mon = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+  const year = d.getFullYear().toString().slice(-2);
+  return `${day}-${mon}-${year}`;
+}
 
 import React, { useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
@@ -176,15 +186,17 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
             </div>
           )}
 
-          {/* Date and Priority row */}
-          <div className="flex items-center gap-2">
-            {task.startDate && task.endDate && (
-              <div className="flex items-center gap-1 text-[10px] text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-lg whitespace-nowrap max-w-[120px]">
-                <span>{task.startDate}</span>
-                <MoveRight className="h-3 w-3" />
-                <span>{task.endDate}</span>
-              </div>
-            )}
+          {/* Date and Priority row (priority right-aligned) */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {task.startDate && task.endDate && (
+                <div className="flex items-center gap-1 text-[10px] text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-lg whitespace-nowrap max-w-[120px]">
+                  <span>{formatShortDate(task.startDate)}</span>
+                  <MoveRight className="h-3 w-3" />
+                  <span>{formatShortDate(task.endDate)}</span>
+                </div>
+              )}
+            </div>
             {task.priority && (
               <Badge className={`text-xs font-semibold px-2 py-1 rounded-lg ${PRIORITY_STYLES[task.priority] || ''}`}>{task.priority}</Badge>
             )}

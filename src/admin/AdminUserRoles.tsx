@@ -3,8 +3,11 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Button from "../components/Button";
 
-// Use environment variable for API URL, fallback to production if not set
-const API_URL = import.meta.env.VITE_API_URL || "https://vibecoding-wd29.onrender.com/api";
+// Dynamic API URL: localhost for development, Render for production
+const API_URL =
+  import.meta.env.MODE === "development"
+    ? "http://localhost:5000/api"
+    : (import.meta.env.VITE_API_URL || "https://vibecoding-wd29.onrender.com/api");
 
 export default function AdminUserRoles({ currentUser, onClose }) {
   const [users, setUsers] = useState([]);
