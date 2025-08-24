@@ -30,7 +30,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250,
+  delay: 150,
         tolerance: 5
       }
     })

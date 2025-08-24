@@ -90,12 +90,16 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
     ? {
         transform: CSS.Transform.toString(transform),
         transition: 'transform 200ms cubic-bezier(0.22, 1, 0.36, 1)',
+        // Ensure touch events are captured by the draggable element on mobile
+        touchAction: 'none' as any,
+        webkitTapHighlightColor: 'transparent' as any,
+        userSelect: 'none' as any,
       }
     : isDragging && !isOverlay
     ? {
         display: 'none',
       }
-    : {
+  : {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: 1,
@@ -104,6 +108,10 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
         rotate: 0,
         boxShadow: '0 2px 8px 0 rgba(0,0,0,0.06)',
         zIndex: 0,
+    // Also set touchAction for the static/normal card to reduce interference with touch scrolling
+    touchAction: 'none' as any,
+    webkitTapHighlightColor: 'transparent' as any,
+    userSelect: 'none' as any,
       };
 
   // Restore point: original card is hidden while dragging (not rendered)

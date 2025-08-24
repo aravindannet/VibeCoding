@@ -10,9 +10,9 @@ import PrimaryButton from "./PrimaryButton";
 
 export function HeaderBar({ user, setAdminPanelOpen, adminPanelOpen, setProfileOpen, profileOpen, setUser, setTasks }) {
   return (
-    <div className="absolute top-4 left-4 z-50 flex items-center gap-3">
+    <div className="absolute top-4 left-4 right-4 z-50 flex flex-wrap items-center gap-3">
       <Logo />
-      <span className="flex items-center gap-2 px-3 py-1 rounded-xl bg-white/70 dark:bg-zinc-800/70 shadow text-zinc-700 dark:text-zinc-100 font-semibold text-base">
+      <span className="flex items-center gap-2 px-3 py-1 rounded-xl bg-white/70 dark:bg-zinc-800/70 shadow text-zinc-700 dark:text-zinc-100 font-semibold text-base min-w-0 overflow-hidden">
         {user?.role === 'CFG' && (
           <button
             onClick={() => setAdminPanelOpen(true)}
@@ -36,7 +36,9 @@ export function HeaderBar({ user, setAdminPanelOpen, adminPanelOpen, setProfileO
             </div>
           </div>
         )}
-        {user?.displayName && user.displayName.trim() !== '' ? user.displayName : (user?.email || 'Account')}
+        <span className="truncate max-w-[140px] sm:max-w-none">
+          {user?.displayName && user.displayName.trim() !== '' ? user.displayName : (user?.email || 'Account')}
+        </span>
         <span className="ml-2 px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-800 text-xs font-bold text-indigo-700 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-700">
           {user?.role === 'CFG' ? 'CFG' : user?.role === 'USR' ? 'User' : user?.role}
         </span>
@@ -142,7 +144,7 @@ export function Toolbar({ query, setQuery, users, userFilter, setUserFilter, dar
       >
         {dark ? <Sun className="h-6 w-6 text-yellow-400" /> : <Moon className="h-6 w-6 text-zinc-700 dark:text-zinc-200" />}
       </button>
-      <PrimaryButton onClick={() => setAddOpen(true)} className="w-full sm:w-auto">
+      <PrimaryButton onClick={() => setAddOpen(true)} className="w-36 sm:w-auto">
         <Plus className="h-4 w-4" /> Add Task
       </PrimaryButton>
     </div>

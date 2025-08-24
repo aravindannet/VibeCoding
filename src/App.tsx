@@ -68,7 +68,7 @@ export default function App() {
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250,
+  delay: 150,
         tolerance: 5
       }
     })
@@ -251,7 +251,7 @@ export default function App() {
         setUser={setUser}
         setTasks={setTasks}
       />
-      <div className="min-h-screen bg-gradient-to-b from-zinc-100 to-zinc-200 p-2 sm:p-4 md:p-6 dark:from-zinc-950 dark:to-zinc-900 overflow-x-hidden">
+  <div className="min-h-screen pt-20 sm:pt-24 bg-gradient-to-b from-zinc-100 to-zinc-200 p-2 sm:p-4 md:p-6 dark:from-zinc-950 dark:to-zinc-900 overflow-x-hidden">
         <div className="mx-auto max-w-7xl h-full flex flex-col"> 
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             {/* Logo and user info are now in the floating header, so this is empty for layout spacing */}
