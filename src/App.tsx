@@ -4,7 +4,7 @@ import Auth from "./Auth";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { arrayMove } from "./utils/arrayMove";
 // ...existing code...
-import { fetchTasks, createTask, updateTask, deleteTask } from "./utils/api";
+import { fetchTasks, createTask, updateTask, deleteTask, addTaskComment } from "./utils/api";
 import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor, TouchSensor } from "@dnd-kit/core";
 import SortableTask from "./components/SortableTask";
 import { Status, Task, Priority, AppUser, UserRole } from "./utils/types";
@@ -468,6 +468,56 @@ export default function App() {
                     setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, description } : t)));
                     setSheetTask((s: any) => ({ ...s, description }));
                   }} />
+                </div>
+
+                {/* Comments & History */}
+                <div>
+                  <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Comments</div>
+                  <div className="mt-2 space-y-2 max-h-40 overflow-auto p-2 rounded-md bg-white/60 dark:bg-zinc-900/50 border border-zinc-200/40">
+                    {(sheetTask.comments || []).length === 0 && <div className="text-xs text-zinc-500">No comments yet</div>}
+                    {(sheetTask.comments || []).map((c: any, i: number) => (
+                      <div key={i} className="text-sm">
+                        <div className="text-xs text-zinc-600 dark:text-zinc-300">{c.author || 'Anonymous'} • <span className="text-zinc-400 text-xs">{new Date(c.createdAt).toLocaleString()}</span></div>
+                        <div className="text-zinc-900 dark:text-zinc-100">{c.text}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <input placeholder="Write a comment..." className="flex-1 rounded-xl border px-3 py-2 text-sm" id="newCommentInput" />
+                    <Button onClick={async () => {
+                      const el: HTMLInputElement | null = document.querySelector('#newCommentInput');
+                      if (!el) return;
+                      const text = el.value.trim();
+                      if (!text) return;
+                      try {
+                        const comment = { author: user?.displayName || user?.email || 'Anon', text };
+                        await addTaskComment(sheetTask._id || sheetTask.id, comment);
+                        // refresh task locally: append comment and history
+                        const updated = { ...(sheetTask as any) };
+                        updated.comments = [...(updated.comments || []), { ...comment, createdAt: new Date().toISOString() }];
+                        updated.history = [...(updated.history || []), { type: 'comment', by: comment.author, from: '', to: text, createdAt: new Date().toISOString() }];
+                        setTasks((prev) => prev.map((t) => ((t._id || t.id) === (updated._id || updated.id) ? updated : t)));
+                        setSheetTask(updated);
+                        el.value = '';
+                      } catch (err) {
+                        console.error('Failed to post comment', err);
+                      }
+                    }}>Add</Button>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">History</div>
+                    <div className="mt-2 space-y-2 max-h-36 overflow-auto p-2 rounded-md bg-white/60 dark:bg-zinc-900/50 border border-zinc-200/40 text-xs text-zinc-700 dark:text-zinc-300">
+                      {(sheetTask.history || []).length === 0 && <div>No history yet</div>}
+                      {(sheetTask.history || []).map((h: any, i: number) => (
+                        <div key={i}>
+                          <div className="font-medium">{h.type}</div>
+                          <div className="text-zinc-500">{h.by} {h.from ? `: ${h.from} → ${h.to}` : h.to}</div>
+                          <div className="text-zinc-400 text-xs">{new Date(h.createdAt).toLocaleString()}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex items-end justify-end gap-2">

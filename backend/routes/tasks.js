@@ -22,7 +22,23 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   console.log('PUT /tasks/:id - id:', req.params.id, 'body:', req.body);
   try {
-    const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    // Load existing task to compute history entries
+    const existing = await Task.findById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Task not found' });
+
+    const updates = req.body;
+    const historyEntries = [];
+    if (updates.status && updates.status !== existing.status) {
+      historyEntries.push({ type: 'status', by: updates._updatedBy || 'system', from: existing.status, to: updates.status });
+    }
+    if (updates.owner && updates.owner !== existing.owner) {
+      historyEntries.push({ type: 'owner', by: updates._updatedBy || 'system', from: existing.owner || '', to: updates.owner });
+    }
+    if (updates.priority && updates.priority !== existing.priority) {
+      historyEntries.push({ type: 'priority', by: updates._updatedBy || 'system', from: existing.priority || '', to: updates.priority });
+    }
+
+    const task = await Task.findByIdAndUpdate(req.params.id, { ...updates, $push: { history: { $each: historyEntries } } }, { new: true, runValidators: true });
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
@@ -31,6 +47,25 @@ router.put('/:id', async (req, res) => {
   } catch (err) {
     console.error('Error updating task:', err);
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Add a comment to a task
+router.post('/:id/comments', async (req, res) => {
+  try {
+    const { author, text } = req.body;
+    if (!text) return res.status(400).json({ error: 'Comment text required' });
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    const comment = { author: author || 'Anonymous', text, createdAt: new Date() };
+    task.comments.push(comment);
+    // Also add to history
+    task.history.push({ type: 'comment', by: author || 'Anonymous', from: '', to: text, createdAt: new Date() });
+    await task.save();
+    res.status(201).json(comment);
+  } catch (err) {
+    console.error('Error adding comment:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 

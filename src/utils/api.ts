@@ -35,6 +35,11 @@ export async function deleteTask(id) {
   return res.data;
 }
 
+export async function addTaskComment(id, comment) {
+  const res = await axios.post(`${API_URL}/tasks/${id}/comments`, comment);
+  return res.data;
+}
+
 // Also provide a default export to be resilient to different import styles
 export default {
   fetchTasks,

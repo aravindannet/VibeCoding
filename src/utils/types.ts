@@ -20,4 +20,6 @@ export type Task = {
   status: Status;
   priority?: Priority;
   reaction?: 'like' | 'dislike' | 'heart';
+  comments?: { author?: string; text: string; createdAt?: string }[];
+  history?: { type: string; by?: string; from?: string; to?: string; createdAt?: string }[];
 };
