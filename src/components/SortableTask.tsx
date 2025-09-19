@@ -87,43 +87,25 @@ const PRIORITY_STYLES: Record<string, string> = {
 const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, onUpdate, dragOverlay = false }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task._id || task.id });
   const isOverlay = dragOverlay === true;
-  const style = isOverlay
-    ? {
-        transform: CSS.Transform.toString(transform),
-        transition: 'transform 200ms cubic-bezier(0.22, 1, 0.36, 1)',
-  // Ensure touch events are captured by the draggable element on mobile
-  touchAction: 'none' as any,
-  WebkitTapHighlightColor: 'transparent' as any,
-        userSelect: 'none' as any,
-      }
-    : isDragging && !isOverlay
-    ? {
-        display: 'none',
-      }
-  : {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: 1,
-        filter: 'none',
-        scale: 1,
-        rotate: 0,
-        boxShadow: '0 2px 8px 0 rgba(0,0,0,0.06)',
-        zIndex: 0,
-  // Also set touchAction for the static/normal card to reduce interference with touch scrolling
-  touchAction: 'none' as any,
-  WebkitTapHighlightColor: 'transparent' as any,
-    userSelect: 'none' as any,
-      };
 
-  // Restore point: original card is hidden while dragging (not rendered)
-  if (isDragging && !isOverlay) {
-    return null;
-  }
+  // Inline style that handles transform/transition for both overlay and normal cards.
+  const inlineStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition: isOverlay ? 'transform 200ms cubic-bezier(0.22, 1, 0.36, 1)' : transition,
+    // reduce touch interference
+    touchAction: 'none' as any,
+    WebkitTapHighlightColor: 'transparent' as any,
+    userSelect: 'none' as any,
+  };
+
+  // Placeholder class to hide the original while preserving layout when dragging
+  const placeholderClass = isDragging && !isOverlay ? 'invisible pointer-events-none' : '';
   return (
     <motion.div
       ref={isOverlay ? undefined : setNodeRef}
       layout
-      style={style}
+      style={inlineStyle}
+      className={placeholderClass}
       initial={isOverlay ? { scale: 1.05, opacity: 0.95, boxShadow: '0 12px 40px 0 rgba(31,38,135,0.3)' } : false}
       animate={isOverlay
         ? { scale: 1.05, opacity: 1, boxShadow: '0 20px 60px 0 rgba(31,38,135,0.35)', rotate: 0 }
@@ -138,11 +120,13 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
     >
       <Card
         className={`relative flex select-none flex-row items-start gap-3 rounded-2xl border border-zinc-200 bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 shadow-lg px-4 py-3 transition-all duration-150 ${isDragging ? "ring-2 ring-indigo-400 scale-[1.02]" : "hover:shadow-xl"} cursor-grab active:cursor-grabbing`}
-        style={style}
+  style={isOverlay ? inlineStyle : undefined}
         {...attributes}
         {...listeners}
         tabIndex={0}
         aria-label={task.name}
+        // apply placeholder class to preserve layout when dragging
+        data-placeholder={placeholderClass}
       >
   {/* Drag handle removed to free up space for card content */}
         {/* Card content */}

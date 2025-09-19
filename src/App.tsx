@@ -185,16 +185,47 @@ export default function App() {
     if (!activeTask) return;
     const overId = over.id as string;
   const isColumn = (COLUMNS as any).some((c: any) => c.id === overId);
+    // Build column-wise task lists (excluding the active task) so we can insert
+    const colMap: Record<string, Task[]> = { todo: [], inprogress: [], blocker: [], done: [] } as any;
+    tasks.forEach((t) => {
+      const idKey = t._id || t.id;
+      if (idKey === (activeTask._id || activeTask.id)) return; // skip active
+      colMap[t.status || 'todo'].push(t);
+    });
+
     let destColumn: Status | null = null;
-    if (isColumn) destColumn = overId as Status;
-    else {
+    if (isColumn) {
+      destColumn = overId as Status;
+      // insert at end of that column — ensure we update the task's status in-memory
+      colMap[destColumn].push({ ...(activeTask as Task), status: destColumn });
+    } else {
+      // Dropped over another task — insert before that task in its column
       const overTask = tasks.find((t) => (t._id || t.id) === overId);
       destColumn = (overTask?.status || activeTask.status) as Status;
+      const list = colMap[destColumn] || [];
+      const insertIndex = list.findIndex((t) => (t._id || t.id) === (overTask?._id || overTask?.id));
+      if (insertIndex === -1) {
+        // not found (rare) — append
+        list.push({ ...(activeTask as Task), status: destColumn });
+      } else {
+        list.splice(insertIndex, 0, { ...(activeTask as Task), status: destColumn });
+      }
+      colMap[destColumn] = list;
     }
+
+    // Reconstruct tasks array preserving column order
+    const newTasks: Task[] = [];
+    (COLUMNS as any).forEach((c: any) => {
+      const key = c.id as Status;
+      newTasks.push(...(colMap[key] || []));
+    });
+
+    setTasks(newTasks as Task[]);
+
+    // If status changed, persist to backend
     if (destColumn && activeTask.status !== destColumn) {
       const updateId = activeTask._id || activeTask.id;
       if (!updateId) return;
-      setTasks((prev) => prev.map((t) => ((t._id || t.id) === updateId ? { ...t, status: destColumn } : t)));
       try {
         const updated = { ...activeTask, status: destColumn };
         const savedTask = await updateTask(updateId, updated);

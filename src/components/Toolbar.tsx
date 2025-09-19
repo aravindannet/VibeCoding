@@ -42,7 +42,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
 						aria-label="Search tasks"
 						type="text"
 						placeholder="Search tasks, owner or JIRA"
-						className="w-full pl-10 pr-3 py-2 rounded-xl bg-transparent text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+						className="w-full pl-10 pr-3 py-2 rounded-xl bg-transparent text-sm text-zinc-900 placeholder:text-zinc-500 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-400"
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 					/>
