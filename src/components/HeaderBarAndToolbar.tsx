@@ -1,8 +1,9 @@
 import Logo from "./Logo";
 import AdminUserRoles from "../admin/AdminUserRoles";
+import Dialog from "../dialogs/Dialog";
 import ProfileDialog from "../dialogs/ProfileDialog";
 import { signOut, getAuth } from "firebase/auth";
-import { LogOut, Search, CalendarDays, Sun, Moon, Plus } from "lucide-react";
+import { LogOut, Search, CalendarDays, Sun, Moon, Plus, User } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import Input from "./Input";
 import UserFilterDropdown from "./UserFilterDropdown";
@@ -19,6 +20,10 @@ export function HeaderBar({
   setUser,
   setTasks,
   // forwarded toolbar props (optional)
+  panelOpen,
+  setPanelOpen,
+  panelTab,
+  setPanelTab,
   query,
   setQuery,
   users,
@@ -30,7 +35,6 @@ export function HeaderBar({
   selectedDate,
   setSelectedDate,
 }: any) {
-  const [panelOpen, setPanelOpen] = useState(false);
 
   return (
   <div className="w-full px-4 py-3">
@@ -41,24 +45,15 @@ export function HeaderBar({
           <button
             onClick={() => setAdminPanelOpen(true)}
             title="Manage User Roles"
-            className="ml-1 p-1 rounded-full hover:bg-indigo-100 dark:hover:bg-zinc-700 transition border border-indigo-200 dark:border-indigo-700"
+            className="ml-1 p-1 rounded-full transition hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/40 dark:border-zinc-700/40"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600 dark:text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            <Plus className="h-5 w-5 text-indigo-600 dark:text-indigo-300" />
           </button>
         )}
         {adminPanelOpen && user?.role === 'CFG' && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-4 max-w-2xl w-full relative">
-              <button
-                onClick={() => setAdminPanelOpen(false)}
-                className="absolute top-2 right-2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 text-xl"
-                title="Close"
-              >
-                &times;
-              </button>
-              <AdminUserRoles currentUser={user} onClose={() => setAdminPanelOpen(false)} />
-            </div>
-          </div>
+          <Dialog open={adminPanelOpen} onClose={() => setAdminPanelOpen(false)} maxWidth="40rem">
+            <AdminUserRoles currentUser={user} onClose={() => setAdminPanelOpen(false)} />
+          </Dialog>
         )}
         <span className="truncate max-w-[140px] sm:max-w-none">
           {user?.displayName && user.displayName.trim() !== '' ? user.displayName : (user?.email || 'Account')}
@@ -69,9 +64,17 @@ export function HeaderBar({
         <button
           onClick={() => setProfileOpen(true)}
           title="Edit Profile"
+          className="ml-1 p-1 rounded-full transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+        >
+          <User className="h-5 w-5 text-zinc-500 dark:text-zinc-300" />
+        </button>
+        <button
+          onClick={() => setDark && setDark(!dark)}
+          title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-pressed={dark}
           className="ml-1 p-1 rounded-full transition"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500 dark:text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3zm-2 6h12" /></svg>
+          {dark ? <Sun className="h-5 w-5 text-yellow-400" /> : <Moon className="h-5 w-5 text-zinc-500" />}
         </button>
         <button
           onClick={() => signOut(getAuth())}
@@ -92,7 +95,8 @@ export function HeaderBar({
       />
       <ToolbarPanel
         open={panelOpen}
-        onClose={() => setPanelOpen(false)}
+        onClose={() => { setPanelOpen(false); }}
+        defaultTab={panelTab}
         query={query}
         setQuery={setQuery}
         users={users}

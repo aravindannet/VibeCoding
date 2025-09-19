@@ -45,6 +45,8 @@ export default function App() {
   });
   const [tasks, setTasks] = useState<Task[]>([]);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelTab, setPanelTab] = useState<'users' | 'date' | 'search' | null>(null);
   const [query, setQuery] = useState("");
   const [userFilter, setUserFilter] = useState<string[]>([]);
   const [sheetTask, setSheetTask] = useState<Task | null>(null);
@@ -252,6 +254,17 @@ export default function App() {
         profileOpen={profileOpen}
         setUser={setUser}
         setTasks={setTasks}
+        panelOpen={panelOpen}
+        setPanelOpen={setPanelOpen}
+        panelTab={panelTab}
+        setPanelTab={setPanelTab}
+        users={users}
+        userFilter={userFilter}
+        setUserFilter={setUserFilter}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        dark={dark}
+        setDark={setDark}
       />
   <div className="min-h-screen pt-4 sm:pt-6 overflow-x-hidden">
         <div className="mx-auto max-w-7xl h-full flex flex-col"> 
@@ -269,6 +282,8 @@ export default function App() {
               setAddOpen={setAddOpen}
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
+              setPanelOpen={setPanelOpen}
+              setPanelTab={setPanelTab}
             />
 
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Search, Plus, CalendarDays, Users } from 'lucide-react';
-import FloatingDatePicker from './FloatingDatePicker';
+import { Search, Plus, SlidersHorizontal } from 'lucide-react';
+import SimpleDatePicker from './SimpleDatePicker';
 import UserFilterDropdown from './UserFilterDropdown';
 import Button from './Button';
 
@@ -15,6 +15,8 @@ interface ToolbarProps {
 	setSelectedDate: (d: string) => void;
 	dark: boolean;
 	setDark: (d: boolean) => void;
+	setPanelOpen?: (b: boolean) => void;
+	setPanelTab?: (tab: 'users' | 'date' | 'search' | null) => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -28,6 +30,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
 	setSelectedDate,
 	dark,
 	setDark,
+	setPanelOpen,
+	setPanelTab,
 }) => {
 	return (
 		<div className="w-full flex items-center gap-3">
@@ -47,7 +51,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
 			<div className="hidden sm:flex items-center gap-2">
 				<UserFilterDropdown users={users} selected={userFilter} setSelected={setUserFilter} />
-				<FloatingDatePicker selectedDate={selectedDate} onDateSelect={setSelectedDate} onClear={() => setSelectedDate('')} />
+				<SimpleDatePicker selectedDate={selectedDate} onDateSelect={setSelectedDate} onClear={() => setSelectedDate('')} />
 				<Button
 					onClick={() => setAddOpen(true)}
 					className="bg-indigo-600 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow hover:scale-105 transition-transform duration-150"
@@ -58,11 +62,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
 			</div>
 
 			<div className="flex sm:hidden items-center gap-2">
-				<button className="p-2 rounded-lg bg-transparent border border-zinc-200/20 dark:border-zinc-800/30" title="Users">
-					<Users className="h-4 w-4 text-zinc-700 dark:text-zinc-200" />
-				</button>
-				<button className="p-2 rounded-lg bg-transparent border border-zinc-200/20 dark:border-zinc-800/30" title="Date">
-					<CalendarDays className="h-4 w-4 text-zinc-700 dark:text-zinc-200" />
+				<button
+					onClick={() => { setPanelTab && setPanelTab(null); setPanelOpen && setPanelOpen(true); }}
+					className="p-2 rounded-lg bg-transparent border border-zinc-200/20 dark:border-zinc-800/30"
+					title="Filters"
+				>
+					<SlidersHorizontal className="h-4 w-4 text-zinc-700 dark:text-zinc-200" />
 				</button>
 				<button onClick={() => setAddOpen(true)} className="p-2 rounded-lg bg-indigo-600 text-white" title="Add task">
 					<Plus className="h-4 w-4" />
