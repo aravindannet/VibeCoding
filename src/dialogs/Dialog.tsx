@@ -5,7 +5,7 @@ const Dialog = ({ open, onClose, children, maxWidth }: any) => (
   <div className={`fixed inset-0 z-50 ${open ? "" : "hidden"}`}>
     <div className="absolute inset-0 bg-black/40" onClick={onClose} />
     <div
-      className="absolute left-1/2 top-1/2 w-full -translate-x-1/2 -translate-y-1/2 rounded-3xl shadow-2xl dark:bg-zinc-900/40 dark:border-zinc-700/40 dark:backdrop-blur-md transition-all duration-300"
+      className="absolute inset-4 sm:inset-auto sm:left-1/2 sm:top-1/2 w-full sm:w-auto sm:-translate-x-1/2 sm:-translate-y-1/2 rounded-3xl shadow-2xl dark:bg-zinc-900/40 dark:border-zinc-700/40 dark:backdrop-blur-md transition-all duration-300"
       style={{
         maxWidth: maxWidth || '40rem',
         maxHeight: '80vh',
@@ -28,7 +28,7 @@ const Dialog = ({ open, onClose, children, maxWidth }: any) => (
             <X className="h-5 w-5 text-zinc-700 dark:text-zinc-200" strokeWidth={2} />
           </button>
         </div>
-  <div className="p-2 sm:p-4 pt-0 overflow-auto" style={{ maxHeight: 'calc(80vh - 40px)' }}>{children}</div>
+  <div className="p-3 sm:p-4 overflow-auto" style={{ maxHeight: 'calc(80vh - 48px)' }}>{children}</div>
       </div>
     </div>
   </div>

@@ -27,8 +27,9 @@ export default function ProfileDialog({ user, open, onClose, onProfileUpdate }) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div
-        className="rounded-2xl border p-6 w-full max-w-sm text-zinc-900 dark:text-zinc-100"
+      <div className="absolute inset-4 sm:inset-auto sm:relative sm:flex sm:items-center sm:justify-center">
+        <div
+          className="rounded-2xl border p-6 w-full max-w-sm text-zinc-900 dark:text-zinc-100"
         style={{
           background: 'linear-gradient(135deg, rgba(255,255,255,0.12) 60%, rgba(245,245,255,0.04) 100%)',
           boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
@@ -52,6 +53,7 @@ export default function ProfileDialog({ user, open, onClose, onProfileUpdate }) 
         </form>
         {error && <div className="mt-2 text-red-600 text-sm text-center">{error}</div>}
         <button onClick={onClose} className="mt-4 w-full text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200">Cancel</button>
+      </div>
       </div>
     </div>
   );

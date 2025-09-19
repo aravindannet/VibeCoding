@@ -375,7 +375,7 @@ export default function App() {
             </div>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 flex-1 overflow-x-auto pb-4"> 
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 flex-1 overflow-x-auto pb-4 px-4 sm:px-0"> 
                 {filteredColumns.map((col: any) => ( 
                   <div key={col.id} className="flex flex-col min-w-[280px] sm:min-w-0"> 
                     <Column 

@@ -17,7 +17,7 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate, hi
     id === 'done' ? 'done-column' : ''
   }`;
   return (
-    <div className="flex h-full min-h-[460px] flex-col">
+    <div className="flex h-full min-h-[460px] flex-col px-2 sm:px-0">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div
