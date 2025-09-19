@@ -414,7 +414,7 @@ export default function App() {
           <Dialog open={!!sheetTask} onClose={() => setSheetTask(null)} title={sheetTask?.name || "Edit Task"}>
             {sheetTask && (
               <form className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Status</div>
                     <div className="mt-1">
@@ -425,7 +425,7 @@ export default function App() {
                           setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, status } : t)));
                           setSheetTask((s: any) => ({ ...s, status }));
                         }}
-                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100"
+                        className="w-full rounded-xl border border-zinc-300 bg-white px-2 py-1 text-xs sm:text-sm sm:px-3 sm:py-2 outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100"
                       >
                         <option value="todo">Not Started</option>
                         <option value="inprogress">In Progress</option>
@@ -444,7 +444,7 @@ export default function App() {
                           setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, priority } : t)));
                           setSheetTask((s: any) => ({ ...s, priority }));
                         }}
-                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100"
+                        className="w-full rounded-xl border border-zinc-300 bg-white px-2 py-1 text-xs sm:text-sm sm:px-3 sm:py-2 outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100"
                       >
                         <option>Low</option>
                         <option>Medium</option>
@@ -454,10 +454,10 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Owner</div>
-                    <Input value={sheetTask.owner || ""} onChange={(e: any) => {
+                    <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2" value={sheetTask.owner || ""} onChange={(e: any) => {
                       const owner = e.target.value;
                       setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, owner } : t)));
                       setSheetTask((s: any) => ({ ...s, owner }));
@@ -465,18 +465,17 @@ export default function App() {
                   </div>
                   <div>
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Jira Issue Key</div>
-                    <Input value={sheetTask.jiraKey || ""} onChange={(e: any) => {
+                    <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2" value={sheetTask.jiraKey || ""} onChange={(e: any) => {
                       const jiraKey = e.target.value.toUpperCase();
                       setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, jiraKey } : t)));
                       setSheetTask((s: any) => ({ ...s, jiraKey }));
                     }} placeholder="e.g., ABC-123" />
                   </div>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Start</div>
-                    <Input type="date" value={sheetTask.startDate || ""} onChange={(e: any) => {
+                    <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2" type="date" value={sheetTask.startDate || ""} onChange={(e: any) => {
                       const startDate = e.target.value;
                       setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, startDate } : t)));
                       setSheetTask((s: any) => ({ ...s, startDate }));
@@ -484,7 +483,7 @@ export default function App() {
                   </div>
                   <div>
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">End</div>
-                    <Input type="date" value={sheetTask.endDate || ""} onChange={(e: any) => {
+                    <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2" type="date" value={sheetTask.endDate || ""} onChange={(e: any) => {
                       const endDate = e.target.value;
                       setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, endDate } : t)));
                       setSheetTask((s: any) => ({ ...s, endDate }));

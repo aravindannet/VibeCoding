@@ -119,7 +119,7 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
       }}
     >
       <Card
-        className={`relative flex select-none flex-row items-start gap-3 rounded-2xl border border-zinc-200 bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 shadow-lg px-4 py-3 transition-all duration-150 ${isDragging ? "ring-2 ring-indigo-400 scale-[1.02]" : "hover:shadow-xl"} cursor-grab active:cursor-grabbing`}
+        className={`relative flex select-none flex-row items-start gap-3 rounded-2xl border border-zinc-200 bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 shadow-lg px-3 py-2 sm:px-4 sm:py-3 transition-all duration-150 min-w-0 ${isDragging ? "ring-2 ring-indigo-400 scale-[1.02]" : "hover:shadow-xl"} cursor-grab active:cursor-grabbing`}
   style={isOverlay ? inlineStyle : undefined}
         {...attributes}
         {...listeners}
