@@ -22,7 +22,7 @@ import ProfileDialog from "./dialogs/ProfileDialog";
 import Header from "./components/Header";
 import ActiveFilters from "./components/ActiveFilters";
 import TaskBoard from "./components/TaskBoard";
-import { ExternalLink, Trash2, Plus, CalendarDays, Sun, Moon, Search, LogOut } from "lucide-react";
+import { ExternalLink, Trash2, Plus, CalendarDays, Sun, Moon, Search, LogOut, Send, ArrowRight } from "lucide-react";
 import { HeaderBar } from "./components/HeaderBarAndToolbar";
 import Toolbar from "./components/Toolbar";
 import Button from "./components/Button";
@@ -472,50 +472,90 @@ export default function App() {
 
                 {/* Comments & History */}
                 <div>
-                  <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Comments</div>
-                  <div className="mt-2 space-y-2 max-h-40 overflow-auto p-2 rounded-md bg-white/60 dark:bg-zinc-900/50 border border-zinc-200/40">
-                    {(sheetTask.comments || []).length === 0 && <div className="text-xs text-zinc-500">No comments yet</div>}
-                    {(sheetTask.comments || []).map((c: any, i: number) => (
-                      <div key={i} className="text-sm">
-                        <div className="text-xs text-zinc-600 dark:text-zinc-300">{c.author || 'Anonymous'} • <span className="text-zinc-400 text-xs">{new Date(c.createdAt).toLocaleString()}</span></div>
-                        <div className="text-zinc-900 dark:text-zinc-100">{c.text}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-2 flex gap-2">
-                    <input placeholder="Write a comment..." className="flex-1 rounded-xl border px-3 py-2 text-sm" id="newCommentInput" />
-                    <Button onClick={async () => {
-                      const el: HTMLInputElement | null = document.querySelector('#newCommentInput');
-                      if (!el) return;
-                      const text = el.value.trim();
-                      if (!text) return;
-                      try {
-                        const comment = { author: user?.displayName || user?.email || 'Anon', text };
-                        await addTaskComment(sheetTask._id || sheetTask.id, comment);
-                        // refresh task locally: append comment and history
-                        const updated = { ...(sheetTask as any) };
-                        updated.comments = [...(updated.comments || []), { ...comment, createdAt: new Date().toISOString() }];
-                        updated.history = [...(updated.history || []), { type: 'comment', by: comment.author, from: '', to: text, createdAt: new Date().toISOString() }];
-                        setTasks((prev) => prev.map((t) => ((t._id || t.id) === (updated._id || updated.id) ? updated : t)));
-                        setSheetTask(updated);
-                        el.value = '';
-                      } catch (err) {
-                        console.error('Failed to post comment', err);
-                      }
-                    }}>Add</Button>
+                  <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Add comment</div>
+                  <div className="mt-2 relative">
+                    <Textarea
+                      placeholder="Write a comment..."
+                      className="w-full pr-12 py-1.5 text-zinc-900 placeholder-zinc-500"
+                      id="newCommentInput"
+                      rows={2}
+                      onKeyDown={async (e: any) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          const el: HTMLTextAreaElement | null = document.querySelector('#newCommentInput');
+                          if (!el) return;
+                          const text = el.value.trim();
+                          if (!text) return;
+                          try {
+                            const payload = { author: user?.displayName || user?.email || 'Anon', text };
+                            const newHistory = await addTaskComment(sheetTask._id || sheetTask.id, payload);
+                            const updated = { ...(sheetTask as any) };
+                            updated.history = [...(updated.history || []), { ...newHistory, createdAt: new Date(newHistory.createdAt).toISOString() }];
+                            setTasks((prev) => prev.map((t) => ((t._id || t.id) === (updated._id || updated.id) ? updated : t)));
+                            setSheetTask(updated);
+                            el.value = '';
+                          } catch (err) {
+                            console.error('Failed to post comment', err);
+                          }
+                        }
+                      }}
+                    />
+                    <Button
+                      stopPropagation={true}
+                      className="!rounded-none !bg-transparent !shadow-none !px-0 !py-0 !border-0 !border-transparent absolute right-2 top-1/2 -translate-y-1/2 text-indigo-600 hover:text-indigo-800 w-7 h-7 flex items-center justify-center focus:outline-none focus:ring-0 hover:!bg-transparent"
+                      title="Send comment"
+                      aria-label="Send comment"
+                      onClick={async (e: any) => {
+                        e.preventDefault();
+                        const el: HTMLTextAreaElement | null = document.querySelector('#newCommentInput');
+                        if (!el) return;
+                        const text = el.value.trim();
+                        if (!text) return;
+                        try {
+                          const payload = { author: user?.displayName || user?.email || 'Anon', text };
+                          const newHistory = await addTaskComment(sheetTask._id || sheetTask.id, payload);
+                          // refresh task locally: append history entry
+                          const updated = { ...(sheetTask as any) };
+                          updated.history = [...(updated.history || []), { ...newHistory, createdAt: new Date(newHistory.createdAt).toISOString() }];
+                          setTasks((prev) => prev.map((t) => ((t._id || t.id) === (updated._id || updated.id) ? updated : t)));
+                          setSheetTask(updated);
+                          el.value = '';
+                        } catch (err) {
+                          console.error('Failed to post comment', err);
+                        }
+                      }}
+                    >
+                      <ArrowRight className="h-5 w-5 text-indigo-600 dark:text-white" />
+                    </Button>
                   </div>
 
                   <div className="mt-4">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">History</div>
-                    <div className="mt-2 space-y-2 max-h-36 overflow-auto p-2 rounded-md bg-white/60 dark:bg-zinc-900/50 border border-zinc-200/40 text-xs text-zinc-700 dark:text-zinc-300">
+                    <div className="mt-2 space-y-2 max-h-36 overflow-auto history-scroll p-2 rounded-md bg-white/60 dark:bg-zinc-900/40 border border-zinc-200/40 dark:border-zinc-700/30 text-xs text-zinc-700 dark:text-zinc-300 shadow-sm" style={{backgroundClip: 'padding-box'}}>
                       {(sheetTask.history || []).length === 0 && <div>No history yet</div>}
-                      {(sheetTask.history || []).map((h: any, i: number) => (
-                        <div key={i}>
-                          <div className="font-medium">{h.type}</div>
-                          <div className="text-zinc-500">{h.by} {h.from ? `: ${h.from} → ${h.to}` : h.to}</div>
-                          <div className="text-zinc-400 text-xs">{new Date(h.createdAt).toLocaleString()}</div>
-                        </div>
-                      ))}
+                      {(sheetTask.history || []).map((h: any, i: number) => {
+                        // If this history entry is a comment, render as: Name (first) \n comment text \n timestamp
+                        if (h.action === 'comment') {
+                          const author = (h.by || h.author || 'Anon') as string;
+                          const firstName = author.split(' ').filter(Boolean)[0] || author;
+                          const commentText = h.to || h.text || '';
+                          const nextIsComment = (sheetTask.history || [])[i + 1]?.action === 'comment';
+                          return (
+                            <div key={i} className={`space-y-1 ${nextIsComment ? 'border-b border-zinc-200/30 dark:border-zinc-700/30 pb-2' : ''}`}>
+                              <div className="font-medium">{firstName}</div>
+                              <div className="text-zinc-700 dark:text-zinc-200 whitespace-pre-wrap">{commentText}</div>
+                              <div className="text-zinc-600 dark:text-zinc-400 text-xs">{new Date(h.createdAt).toLocaleString()}</div>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div key={i}>
+                            <div className="font-medium">{h.action}</div>
+                            <div className="text-zinc-500">{h.by} {h.from ? `: ${h.from} → ${h.to}` : h.to}</div>
+                            <div className="text-zinc-600 dark:text-zinc-400 text-xs">{new Date(h.createdAt).toLocaleString()}</div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

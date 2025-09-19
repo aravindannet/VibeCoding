@@ -40,6 +40,7 @@ interface Task {
   reaction?: "like" | "dislike" | "heart";
   jiraKey?: string;
   jiraBaseUrl?: string;
+  history?: Array<{ action: string; by?: string; from?: string; to?: string; createdAt?: string }>;
 }
 
 interface SortableTaskProps {
@@ -162,7 +163,7 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
                 className="!rounded-full !px-2 !py-1"
                 title="Details"
                 aria-label="Edit task details"
-                onPointerDown={e => e.stopPropagation()}
+                stopPropagation={true}
                 onClick={(e) => {
                   e.preventDefault();
                   onInspect(task);
@@ -175,7 +176,7 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
                 className="!rounded-full !px-2 !py-1"
                 title="Delete"
                 aria-label="Delete task"
-                onPointerDown={e => e.stopPropagation()}
+                stopPropagation={true}
                 onClick={(e) => {
                   e.preventDefault();
                   onDelete(task);
@@ -183,6 +184,23 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onInspect, onDelete, 
                 tabIndex={0}
               >
                 <Trash2 className="h-4 w-4" />
+              </Button>
+              {/* Comment bubble previously added - ensure it doesn't propagate */}
+              <Button
+                className="!rounded-full !px-2 !py-1"
+                title="Comments"
+                aria-label="Add/view comments"
+                stopPropagation={true}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onInspect(task);
+                }}
+                tabIndex={0}
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                {task.history && task.history.filter((h:any) => h.action === 'comment').length > 0 && (
+                  <span className="ml-1 text-[11px] font-semibold">{task.history.filter((h:any) => h.action === 'comment').length}</span>
+                )}
               </Button>
             </div>
           </div>

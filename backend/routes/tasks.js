@@ -29,13 +29,13 @@ router.put('/:id', async (req, res) => {
     const updates = req.body;
     const historyEntries = [];
     if (updates.status && updates.status !== existing.status) {
-      historyEntries.push({ type: 'status', by: updates._updatedBy || 'system', from: existing.status, to: updates.status });
+      historyEntries.push({ action: 'status', by: updates._updatedBy || 'system', from: existing.status, to: updates.status });
     }
     if (updates.owner && updates.owner !== existing.owner) {
-      historyEntries.push({ type: 'owner', by: updates._updatedBy || 'system', from: existing.owner || '', to: updates.owner });
+      historyEntries.push({ action: 'owner', by: updates._updatedBy || 'system', from: existing.owner || '', to: updates.owner });
     }
     if (updates.priority && updates.priority !== existing.priority) {
-      historyEntries.push({ type: 'priority', by: updates._updatedBy || 'system', from: existing.priority || '', to: updates.priority });
+      historyEntries.push({ action: 'priority', by: updates._updatedBy || 'system', from: existing.priority || '', to: updates.priority });
     }
 
     const task = await Task.findByIdAndUpdate(req.params.id, { ...updates, $push: { history: { $each: historyEntries } } }, { new: true, runValidators: true });
@@ -58,11 +58,12 @@ router.post('/:id/comments', async (req, res) => {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ error: 'Task not found' });
     const comment = { author: author || 'Anonymous', text, createdAt: new Date() };
-    task.comments.push(comment);
-    // Also add to history
-    task.history.push({ type: 'comment', by: author || 'Anonymous', from: '', to: text, createdAt: new Date() });
-    await task.save();
-    res.status(201).json(comment);
+      // Do not keep a separate comments array; record comments as history entries only
+      const historyEntry = { action: 'comment', by: author || 'Anonymous', from: '', to: text, createdAt: new Date() };
+      task.history.push(historyEntry);
+      await task.save();
+      // Return the new history entry so the client can update local state
+      res.status(201).json(historyEntry);
   } catch (err) {
     console.error('Error adding comment:', err);
     res.status(500).json({ error: err.message });

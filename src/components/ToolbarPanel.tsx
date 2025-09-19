@@ -89,7 +89,7 @@ const ToolbarPanel: React.FC<Props> = ({
             {(defaultTab === 'users' || !defaultTab) && (
               <div>
                 <div className="text-xs text-zinc-600 dark:text-zinc-300 mb-1">Users</div>
-                <div className="space-y-2 p-2 rounded-md bg-white/60 dark:bg-zinc-900/50">
+                <div className="space-y-2 p-2 rounded-md bg-white/70 dark:bg-zinc-900/50 border border-zinc-200/30 shadow-sm">
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -117,7 +117,7 @@ const ToolbarPanel: React.FC<Props> = ({
             {(defaultTab === 'date' || !defaultTab) && (
               <div>
                 <div className="text-xs text-zinc-600 dark:text-zinc-300 mb-1">Date</div>
-                <div className="p-2 rounded-md bg-white/60 dark:bg-zinc-900/50">
+                <div className="p-2 rounded-md bg-white/70 dark:bg-zinc-900/50 border border-zinc-200/30 shadow-sm">
                   <SimpleDatePicker
                     selectedDate={selectedDate}
                     onDateSelect={(d) => setSelectedDate(d)}
