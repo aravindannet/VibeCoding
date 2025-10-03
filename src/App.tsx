@@ -413,9 +413,9 @@ export default function App() {
 
           <Dialog open={!!sheetTask} onClose={() => setSheetTask(null)} title={sheetTask?.name || "Edit Task"}>
             {sheetTask && (
-              <form className="space-y-4">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
+              <form className="space-y-2 min-w-0 p-0 sm:p-1">
+                <div className="grid grid-cols-2 gap-3 min-w-0 items-start">
+                  <div className="flex flex-col">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Status</div>
                     <div className="mt-1">
                       <select
@@ -434,7 +434,7 @@ export default function App() {
                       </select>
                     </div>
                   </div>
-                  <div>
+                  <div className="flex flex-col">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Priority</div>
                     <div className="mt-1">
                       <select
@@ -454,40 +454,41 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
+                <div className="grid grid-cols-2 gap-3 min-w-0 items-start">
+                  <div className="flex flex-col">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Owner</div>
-                    <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2" value={sheetTask.owner || ""} onChange={(e: any) => {
-                      const owner = e.target.value;
-                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, owner } : t)));
-                      setSheetTask((s: any) => ({ ...s, owner }));
-                    }} />
+                    <div className="mt-1">
+                      <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2" value={sheetTask.owner || ""} onChange={(e: any) => {
+                        const owner = e.target.value;
+                        setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, owner } : t)));
+                        setSheetTask((s: any) => ({ ...s, owner }));
+                      }} />
+                    </div>
                   </div>
-                  <div>
+                  <div className="flex flex-col">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Jira Issue Key</div>
-                    <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2" value={sheetTask.jiraKey || ""} onChange={(e: any) => {
-                      const jiraKey = e.target.value.toUpperCase();
-                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, jiraKey } : t)));
-                      setSheetTask((s: any) => ({ ...s, jiraKey }));
-                    }} placeholder="e.g., ABC-123" />
+                    <div className="mt-1">
+                      <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2" value={sheetTask.jiraKey || ""} onChange={(e: any) => {
+                        const jiraKey = e.target.value.toUpperCase();
+                        setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, jiraKey } : t)));
+                        setSheetTask((s: any) => ({ ...s, jiraKey }));
+                      }} placeholder="e.g., ABC-123" />
+                    </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Start</div>
-                    <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2" type="date" value={sheetTask.startDate || ""} onChange={(e: any) => {
-                      const startDate = e.target.value;
-                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, startDate } : t)));
-                      setSheetTask((s: any) => ({ ...s, startDate }));
-                    }} />
-                  </div>
-                  <div>
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">End</div>
-                    <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2" type="date" value={sheetTask.endDate || ""} onChange={(e: any) => {
-                      const endDate = e.target.value;
-                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, endDate } : t)));
-                      setSheetTask((s: any) => ({ ...s, endDate }));
-                    }} />
+                  <div className="flex flex-col">
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Start — End</div>
+                    <div className="mt-1 flex flex-row gap-2">
+                      <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2 flex-1" type="date" value={sheetTask.startDate || ""} onChange={(e: any) => {
+                        const startDate = e.target.value;
+                        setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, startDate } : t)));
+                        setSheetTask((s: any) => ({ ...s, startDate }));
+                      }} />
+                      <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2 flex-1" type="date" value={sheetTask.endDate || ""} onChange={(e: any) => {
+                        const endDate = e.target.value;
+                        setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, endDate } : t)));
+                        setSheetTask((s: any) => ({ ...s, endDate }));
+                      }} />
+                    </div>
                   </div>
                 </div>
 
@@ -559,9 +560,9 @@ export default function App() {
                     </Button>
                   </div>
 
-                  <div className="mt-4">
+                  <div className="mt-1">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">History</div>
-                    <div className="mt-2 space-y-2 max-h-36 overflow-auto history-scroll p-2 rounded-md bg-white/60 dark:bg-zinc-900/40 border border-zinc-200/40 dark:border-zinc-700/30 text-xs text-zinc-700 dark:text-zinc-300 shadow-sm" style={{backgroundClip: 'padding-box'}}>
+                    <div className="mt-2 space-y-2 max-h-16 overflow-auto history-scroll p-2 rounded-md bg-white/60 dark:bg-zinc-900/40 border border-zinc-200/40 dark:border-zinc-700/30 text-xs text-zinc-700 dark:text-zinc-300 shadow-sm flex-shrink-0" style={{backgroundClip: 'padding-box'}}>
                       {(sheetTask.history || []).length === 0 && <div>No history yet</div>}
                       {(sheetTask.history || []).map((h: any, i: number) => {
                         // If this history entry is a comment, render as: Name (first) \n comment text \n timestamp
@@ -590,15 +591,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="flex items-end justify-end gap-2">
-                  <PrimaryButton type="button" onClick={() => {
-                    setPendingTask(sheetTask);
-                    setConfirmType('save');
-                    setConfirmOpen(true);
-                  }}>Save Task</PrimaryButton>
-                </div>
-
-                <div className="flex justify-between pt-2">
+                <div className="flex justify-between pt-2 pb-2">
                   <Button type="button" onClick={() => {
                     setPendingTask(sheetTask);
                     setConfirmType('delete');
@@ -607,6 +600,11 @@ export default function App() {
                     <Trash2 className="h-4 w-4" /> Delete task
                   </Button>
                   <Button onClick={() => setSheetTask(null)}>Close</Button>
+                  <PrimaryButton type="button" onClick={() => {
+                    setPendingTask(sheetTask);
+                    setConfirmType('save');
+                    setConfirmOpen(true);
+                  }}>Save Task</PrimaryButton>
                 </div>
               </form>
             )}

@@ -225,3 +225,12 @@
 /* Firefox */
 .history-scroll { scrollbar-width: thin; scrollbar-color: rgba(129,140,248,0.6) rgba(229,231,235,0.02); }
 .dark .history-scroll { scrollbar-color: rgba(99,102,241,0.5) rgba(17,24,39,0.02); }
+
+/* Hide scrollbars for dialog */
+.dialog-scroll::-webkit-scrollbar {
+  display: none;
+}
+.dialog-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
