@@ -38,7 +38,11 @@ router.put('/:id', async (req, res) => {
       historyEntries.push({ action: 'priority', by: updates._updatedBy || 'system', from: existing.priority || '', to: updates.priority });
     }
 
-    const task = await Task.findByIdAndUpdate(req.params.id, { ...updates, $push: { history: { $each: historyEntries } } }, { new: true, runValidators: true });
+    // Remove history from updates to avoid conflict
+    const { history, ...updateFields } = updates;
+    const updateObj = historyEntries.length > 0 ? { ...updateFields, $push: { history: { $each: historyEntries } } } : updateFields;
+
+    const task = await Task.findByIdAndUpdate(req.params.id, updateObj, { new: true, runValidators: true });
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
