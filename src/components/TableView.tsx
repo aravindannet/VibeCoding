@@ -25,9 +25,9 @@ const TableView: React.FC<TableViewProps> = ({ tasks, onInspect, onDelete }) => 
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-          {tasks.map((task) => (
+          {tasks.map((task, idx) => (
             <tr
-              key={task.id}
+              key={task._id || task.id || task.name || idx}
               className="bg-white hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/50"
             >
               <td className="px-2 py-2">
@@ -115,7 +115,7 @@ const TableView: React.FC<TableViewProps> = ({ tasks, onInspect, onDelete }) => 
                   <Button className="!rounded-full !px-1.5 !py-1.5" title="Details" onClick={() => onInspect(task)}>
                     <ExternalLink className="h-3 w-3" />
                   </Button>
-                  <Button className="!rounded-full !px-1.5 !py-1.5" title="Delete" onClick={() => onDelete(task.id)}>
+                  <Button className="!rounded-full !px-1.5 !py-1.5" title="Delete" onClick={() => onDelete(task._id || task.id)}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>

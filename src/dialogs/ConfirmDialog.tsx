@@ -27,7 +27,7 @@ const ConfirmDialog = ({
       <div className="flex gap-4 mt-2">
         <Button
           onClick={onCancel}
-          className="border-zinc-300 bg-white/60 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+          className="border-zinc-300 bg-white/70 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 shadow-sm"
         >
           {cancelLabel}
         </Button>

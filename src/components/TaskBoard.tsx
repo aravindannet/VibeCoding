@@ -34,7 +34,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
     const { active, over } = event;
     if (!over) return;
 
-    const activeTask = tasks.find((t) => (t._id || t.id) === active.id);
+    const activeTask = tasks.find((t) => t.id === active.id);
     if (!activeTask) return;
 
     const overId = over.id as string;
@@ -44,12 +44,12 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
     if (isColumn) {
       destColumn = overId as Status;
     } else {
-      const overTask = tasks.find((t) => (t._id || t.id) === overId);
+      const overTask = tasks.find((t) => t.id === overId);
       destColumn = (overTask?.status || activeTask.status) as Status;
     }
 
     if (destColumn && activeTask.status !== destColumn) {
-      onTaskMove(activeTask._id || activeTask.id, destColumn);
+      onTaskMove(activeTask.id, destColumn);
     }
   };
 

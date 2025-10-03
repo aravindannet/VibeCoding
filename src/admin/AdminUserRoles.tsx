@@ -3,8 +3,11 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Button from "../components/Button";
 
-// Use environment variable for API URL, fallback to production if not set
-const API_URL = import.meta.env.VITE_API_URL || "https://vibecoding-wd29.onrender.com/api";
+// Dynamic API URL: localhost for development, Render for production
+const API_URL =
+  import.meta.env.MODE === "development"
+    ? "http://localhost:5000/api"
+    : (import.meta.env.VITE_API_URL || "https://vibecoding-wd29.onrender.com/api");
 
 export default function AdminUserRoles({ currentUser, onClose }) {
   const [users, setUsers] = useState([]);
@@ -61,24 +64,17 @@ export default function AdminUserRoles({ currentUser, onClose }) {
   // Render dialog
   return (
     <div
-      className="relative max-w-3xl w-full mx-auto rounded-2xl shadow-2xl backdrop-blur-2xl border border-white/30 bg-white/70 dark:bg-zinc-900/70 overflow-hidden flex flex-col"
+      className="relative max-w-3xl w-full mx-auto rounded-2xl shadow-2xl overflow-hidden flex flex-col"
       style={{
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.22) 60%, rgba(245,245,255,0.10) 100%)',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.12) 60%, rgba(245,245,255,0.04) 100%)',
         boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
         border: '1px solid rgba(255,255,255,0.25)',
         backdropFilter: 'blur(24px)',
-        minHeight: '520px',
+  minHeight: '420px',
         maxHeight: '80vh',
       }}
     >
-      <button
-        onClick={onClose}
-        className="fixed sm:absolute top-4 right-6 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 text-2xl font-bold z-50 bg-transparent"
-        style={{ zIndex: 1000 }}
-        title="Close"
-      >
-        &times;
-      </button>
+      {/* Close button provided by Dialog wrapper */}
       <style>{`
         input[type="text"]::-ms-clear,
         input[type="text"]::-webkit-clear-button,
