@@ -89,7 +89,7 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl, user }: any)
           backdropFilter: 'blur(24px)',
         }}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Task name</label>
             <Input required placeholder="e.g., Implement login API" value={name} onChange={(e: any) => setName(e.target.value)} />
@@ -150,7 +150,7 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl, user }: any)
             )}
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Jira issue key (optional)</label>
             <Input placeholder="e.g., ABC-123" value={jiraKey} onChange={(e: any) => setJiraKey(e.target.value.toUpperCase())} />
