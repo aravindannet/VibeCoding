@@ -1,11 +1,30 @@
 import axios from 'axios';
 
-// Use environment variable for API URL, fallback to production if not set
-// Dynamic API URL: localhost for development, production backend for deployment
-const API_URL =
-  import.meta.env.MODE === "development"
-    ? "http://localhost:5001/api"
-    : (import.meta.env.VITE_API_URL || "https://vibecoding-wd29.onrender.com/api");
+// Dynamic API URL: detects environment and uses appropriate endpoint
+// - Web browser: http://localhost:3001/api
+// - Android emulator: http://10.0.2.2:3001/api (special Android emulator IP)
+// - Production: Uses VITE_API_URL environment variable
+const getApiUrl = () => {
+  // Check if running in production (environment variable set)
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Check if running in Android (Capacitor)
+  const isAndroid = /android/i.test(navigator.userAgent);
+  
+  // For local development
+  if (import.meta.env.MODE === "development") {
+    return isAndroid ? "http://10.0.2.2:5001/api" : "http://localhost:5001/api";
+  }
+  
+  // Fallback to localhost for web browser
+  return "http://localhost:5001/api";
+};
+
+const API_URL = getApiUrl();
+
+console.log('API URL:', API_URL); // Debug log to verify correct URL
 
 // Note: For Netlify deployment, set VITE_API_URL environment variable in Netlify dashboard
 // pointing to your deployed backend (e.g., https://your-backend.onrender.com/api)
