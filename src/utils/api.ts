@@ -6,8 +6,15 @@ import axios from 'axios';
 // - Production: Uses VITE_API_URL environment variable
 const getApiUrl = () => {
   // Check if running in production (environment variable set)
+  // Use VITE_API_URL when provided; otherwise fall back to the Render deployment URL
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
+  }
+
+  // If building/running in production without a VITE_API_URL set at build time,
+  // fall back to the public Render URL (includes /api suffix expected by frontend)
+  if (import.meta.env.MODE === 'production') {
+    return "https://vibecoding-wd29.onrender.com/api";
   }
   
   // Check if running in Android (Capacitor)
