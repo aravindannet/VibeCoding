@@ -36,6 +36,11 @@ console.log('API URL:', API_URL); // Debug log to verify correct URL
 // Note: For Netlify deployment, set VITE_API_URL environment variable in Netlify dashboard
 // pointing to your deployed backend (e.g., https://your-backend.onrender.com/api)
 
+export async function fetchUsers() {
+  const res = await axios.get(`${API_URL}/users`);
+  return res.data;
+}
+
 export async function getUserByUid(uid) {
   const res = await axios.get(`${API_URL}/users/${uid}`);
   return res.data;
