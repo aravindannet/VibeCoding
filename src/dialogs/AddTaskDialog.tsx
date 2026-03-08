@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import { useEffect } from "react";
+import { fetchUsers } from "../utils/api";
 import { DateRange } from 'react-date-range';
 import { addDays } from 'date-fns';
 import 'react-date-range/dist/styles.css';
@@ -39,6 +40,12 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl, user }: any)
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [name, setName] = useState("");
   const [owner, setOwner] = useState("");
+  const [users, setUsers] = useState<Array<any>>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [ownerOpen, setOwnerOpen] = useState(false);
+  const [ownerQuery, setOwnerQuery] = useState("");
+  const ownerRef = React.useRef<HTMLDivElement>(null);
   const [description, setDescription] = useState("");
   const [dateRange, setDateRange] = useState({
     startDate: new Date(),
@@ -59,6 +66,38 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl, user }: any)
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [showDatePicker]);
+
+  // Fetch users for owner dropdown
+  useEffect(() => {
+    let mounted = true;
+    async function loadUsers() {
+      setUsersLoading(true);
+      setUsersError(null);
+      try {
+        const data = await fetchUsers();
+        if (mounted) setUsers(data || []);
+      } catch (err: any) {
+        console.error('Failed to load users', err);
+        if (mounted) setUsersError(err?.message || 'Failed to load users');
+      } finally {
+        if (mounted) setUsersLoading(false);
+      }
+    }
+    loadUsers();
+    return () => { mounted = false; };
+  }, []);
+
+  // close owner dropdown on outside click
+  useEffect(() => {
+    if (!ownerOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (ownerRef.current && !ownerRef.current.contains(e.target as Node)) {
+        setOwnerOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [ownerOpen]);
 
   const submit = (e: any) => {
     e.preventDefault();
@@ -89,14 +128,64 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl, user }: any)
           backdropFilter: 'blur(24px)',
         }}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Task name</label>
             <Input required placeholder="e.g., Implement login API" value={name} onChange={(e: any) => setName(e.target.value)} />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Owner</label>
-            <Input placeholder="e.g., Keerthana" value={owner} onChange={(e: any) => setOwner(e.target.value)} />
+            <div ref={ownerRef} className="relative">
+              {usersLoading ? (
+                <div className="text-xs text-zinc-500">Loading users...</div>
+              ) : usersError ? (
+                <>
+                  <div className="text-xs text-red-500 mb-1">Failed to load users — you can enter a name manually</div>
+                  <Input placeholder="e.g., Keerthana" value={owner} onChange={(e: any) => setOwner(e.target.value)} />
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setOwnerOpen(v => !v)}
+                    className="w-full text-left rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-xs sm:text-sm text-zinc-700 dark:text-zinc-100 outline-none flex justify-between items-center"
+                  >
+                    <span className="truncate">{owner || 'Unassigned'}</span>
+                    <span className="ml-2">▾</span>
+                  </button>
+                  {ownerOpen && (
+                    <div className="absolute left-0 mt-2 z-30 w-full rounded-xl border backdrop-blur-2xl shadow-2xl border-zinc-200 bg-white dark:bg-zinc-900 dark:border-zinc-700/40 dark:backdrop-blur-md p-2 max-h-60 overflow-auto">
+                      <input
+                        className="w-full mb-2 rounded px-2 py-1 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm outline-none"
+                        placeholder="Search users..."
+                        value={ownerQuery}
+                        onChange={(e: any) => setOwnerQuery(e.target.value)}
+                      />
+                      <div>
+                        <button
+                          onClick={() => { setOwner(''); setOwnerOpen(false); setOwnerQuery(''); }}
+                          className="w-full text-left px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100"
+                        >
+                          Unassigned
+                        </button>
+                        {users.filter(u => (u.displayName || u.name || u.email).toLowerCase().includes(ownerQuery.toLowerCase())).map((u: any) => (
+                          <button
+                            key={u.id || u._id || u.uid || u.email}
+                            onClick={() => { setOwner(u.displayName || u.name || u.email); setOwnerOpen(false); setOwnerQuery(''); }}
+                            className="w-full text-left px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100"
+                          >
+                            {u.displayName || u.name || u.email}
+                          </button>
+                        ))}
+                        {users.filter(u => (u.displayName || u.name || u.email).toLowerCase().includes(ownerQuery.toLowerCase())).length === 0 && (
+                          <div className="text-xs text-zinc-500 px-2 py-1">No matches</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
         <div>
@@ -150,7 +239,7 @@ const AddTaskDialog = ({ addOpen, setAddOpen, addTask, jiraBaseUrl, user }: any)
             )}
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">Jira issue key (optional)</label>
             <Input placeholder="e.g., ABC-123" value={jiraKey} onChange={(e: any) => setJiraKey(e.target.value.toUpperCase())} />

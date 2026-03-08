@@ -17,7 +17,7 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate, hi
     id === 'done' ? 'done-column' : ''
   }`;
   return (
-    <div className="flex h-full min-h-[460px] flex-col">
+    <div className="flex h-full min-h-[460px] flex-col px-2 sm:px-0">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div
@@ -69,7 +69,7 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate, hi
                     exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                   >
-                    <div className="w-full max-w-xl bg-indigo-100/60 dark:bg-indigo-900/40 rounded-2xl border-2 border-dashed border-indigo-400 h-16 flex items-center justify-center text-indigo-500 font-bold text-lg opacity-80">
+                    <div className="w-full max-w-full bg-indigo-100/60 dark:bg-indigo-900/40 rounded-2xl border-2 border-dashed border-indigo-400 h-16 flex items-center justify-center text-indigo-500 font-bold text-lg opacity-80">
                       Drop here
                     </div>
                   </motion.div>
@@ -81,7 +81,7 @@ const Column = ({ id, title, color, tasks, onInspect, onDelete, onTaskUpdate, hi
                     transition: { type: 'spring', stiffness: 300, damping: 30 }
                   }}
                 >
-                  <div className="w-full max-w-xl">
+                  <div className="w-full max-w-full min-w-0">
                     <SortableTask 
                       task={task} 
                       onInspect={onInspect} 

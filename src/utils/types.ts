@@ -20,4 +20,5 @@ export type Task = {
   status: Status;
   priority?: Priority;
   reaction?: 'like' | 'dislike' | 'heart';
+  history?: Array<{ action: string; by: string; from?: string; to?: string; createdAt: string }>;
 };

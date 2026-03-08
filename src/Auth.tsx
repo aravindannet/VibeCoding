@@ -14,12 +14,14 @@ export default function Auth({ onAuth }: { onAuth: (user: any) => void }) {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"login" | "register">("login");
+  const [loading, setLoading] = useState(false);
 
   // Remove getRoleForUser, always fetch from backend
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
     try {
       let userCred;
       if (mode === "login") {
@@ -28,17 +30,30 @@ export default function Auth({ onAuth }: { onAuth: (user: any) => void }) {
           return;
         }
         userCred = await signInWithEmailAndPassword(auth, email, password);
-        // Fetch user info (including role) from backend
-        const userFromDb = await getUserByUid(userCred.user.uid);
-        const appUser: AppUser = {
-          uid: userFromDb.uid,
-          displayName: userFromDb.displayName || userCred.user.displayName,
-          email: userFromDb.email || userCred.user.email,
-          role: userFromDb.role,
-        };
-        console.log('[Auth.tsx] Loaded user from DB (login):', userFromDb);
-        await upsertUser(appUser); // Optionally keep this to sync displayName/email
-        onAuth(appUser);
+        // Optimistic: immediately surface the Firebase user to the app with minimal info
+        onAuth({
+          uid: userCred.user.uid,
+          displayName: userCred.user.displayName || '',
+          email: userCred.user.email || email,
+          role: 'USR', // temporary until backend returns real role
+        });
+        // Fetch user info (including role) from backend in background and upsert
+        (async () => {
+          try {
+            const userFromDb = await getUserByUid(userCred.user.uid);
+            const appUser: AppUser = {
+              uid: userFromDb.uid,
+              displayName: userFromDb.displayName || userCred.user.displayName,
+              email: userFromDb.email || userCred.user.email,
+              role: userFromDb.role,
+            };
+            console.log('[Auth.tsx] Loaded user from DB (login):', userFromDb);
+            await upsertUser(appUser);
+            onAuth(appUser); // update with authoritative data
+          } catch (bgErr) {
+            console.error('Background user fetch/upsert failed', bgErr);
+          }
+        })();
       } else {
         if (!name || !email || !password) {
           setError("Name, email, and password are required.");
@@ -53,39 +68,63 @@ export default function Auth({ onAuth }: { onAuth: (user: any) => void }) {
         }
         // Get the latest user info from Firebase
         const updatedUser = getAuth().currentUser;
-        // Save user to backend with displayName
+        // Save user to backend with displayName (run in background to speed UI)
         const appUser: AppUser = {
           uid: updatedUser.uid,
           displayName: displayNameToSave,
           email: updatedUser.email,
           role: 'USR',
         };
-        await upsertUser(appUser);
         onAuth(appUser);
+        (async () => {
+          try {
+            await upsertUser(appUser);
+          } catch (bgErr) {
+            console.error('Background upsert after register failed', bgErr);
+          }
+        })();
       }
     } catch (err: any) {
       console.error('Registration or upsertUser error:', err);
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogle = async () => {
     setError("");
+    setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      // Fetch user info (including role) from backend
-      const userFromDb = await getUserByUid(result.user.uid);
-      const appUser: AppUser = {
-        uid: userFromDb.uid,
-        displayName: userFromDb.displayName || result.user.displayName,
-        email: userFromDb.email || result.user.email,
-        role: userFromDb.role,
-      };
-      console.log('[Auth.tsx] Loaded user from DB (google):', userFromDb);
-      await upsertUser(appUser); // Optionally keep this to sync displayName/email
-      onAuth(appUser);
+      // Optimistic: surface the firebase user immediately
+      onAuth({
+        uid: result.user.uid,
+        displayName: result.user.displayName || '',
+        email: result.user.email || '',
+        role: 'USR',
+      });
+      // Fetch user info and upsert in background
+      (async () => {
+        try {
+          const userFromDb = await getUserByUid(result.user.uid);
+          const appUser: AppUser = {
+            uid: userFromDb.uid,
+            displayName: userFromDb.displayName || result.user.displayName,
+            email: userFromDb.email || result.user.email,
+            role: userFromDb.role,
+          };
+          console.log('[Auth.tsx] Loaded user from DB (google):', userFromDb);
+          await upsertUser(appUser);
+          onAuth(appUser);
+        } catch (bgErr) {
+          console.error('Background user fetch/upsert (google) failed', bgErr);
+        }
+      })();
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -171,11 +210,19 @@ export default function Auth({ onAuth }: { onAuth: (user: any) => void }) {
             />
             <button
               type="submit"
-              className="relative overflow-hidden rounded-xl py-2 font-semibold w-full group focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shadow-lg"
+              disabled={loading}
+              className="relative overflow-hidden rounded-xl py-2 font-semibold w-full group focus:outline-none focus:ring-2 focus:ring-indigo-400 transition shadow-lg disabled:opacity-60 disabled:cursor-wait"
               style={{ background: 'linear-gradient(90deg, #6366f1 0%, #a21caf 100%)' }}
             >
               <span className="relative z-10 text-white drop-shadow-lg">
-                {mode === "login" ? "Sign In" : "Register"}
+                {loading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="loader h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                    <span>Signing in…</span>
+                  </span>
+                ) : (
+                  (mode === "login" ? "Sign In" : "Register")
+                )}
               </span>
               {/* Animated gradient shine */}
               <span
@@ -190,7 +237,7 @@ export default function Auth({ onAuth }: { onAuth: (user: any) => void }) {
               />
             </button>
           </form>
-          <button onClick={handleGoogle} className="mt-4 w-full bg-white border border-zinc-300 dark:border-zinc-700 rounded-xl py-2 font-semibold flex items-center justify-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition shadow">
+          <button onClick={handleGoogle} disabled={loading} className="mt-4 w-full bg-white border border-zinc-300 dark:border-zinc-700 rounded-xl py-2 font-semibold flex items-center justify-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition shadow disabled:opacity-60 disabled:cursor-wait">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="h-5 w-5" />
             Continue with Google
           </button>
@@ -240,6 +287,7 @@ export default function Auth({ onAuth }: { onAuth: (user: any) => void }) {
           animation: fade-in-up 1s cubic-bezier(.4,0,.2,1) both;
         }
         .delay-200 { animation-delay: 0.2s; }
+        .loader { display: inline-block; }
       `}</style>
     </div>
   );

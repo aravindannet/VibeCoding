@@ -4,10 +4,16 @@ interface UserFilterDropdownProps {
   users: string[];
   selected: string[];
   setSelected: (users: string[]) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-const UserFilterDropdown: React.FC<UserFilterDropdownProps> = ({ users, selected, setSelected }) => {
+const UserFilterDropdown: React.FC<UserFilterDropdownProps> = ({ users, selected, setSelected, open, onOpenChange }) => {
   const [show, setShow] = React.useState(false);
+  // If parent controls open state, sync it
+  React.useEffect(() => {
+    if (typeof open === 'boolean') setShow(open);
+  }, [open]);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -26,7 +32,11 @@ const UserFilterDropdown: React.FC<UserFilterDropdownProps> = ({ users, selected
       <button
         type="button"
         className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 flex items-center gap-2"
-        onClick={() => setShow(v => !v)}
+        onClick={() => {
+          const next = !show;
+          setShow(next);
+          onOpenChange && onOpenChange(next);
+        }}
         style={{ minWidth: 120 }}
       >
         <span>{selected.length === 0 ? "Filter by user" : `${selected.length} selected`}</span>

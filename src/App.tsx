@@ -4,7 +4,7 @@ import Auth from "./Auth";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { arrayMove } from "./utils/arrayMove";
 // ...existing code...
-import { fetchTasks, createTask, updateTask, deleteTask } from "./utils/api";
+import { fetchTasks, createTask, updateTask, deleteTask, addTaskComment } from "./utils/api";
 import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor, TouchSensor } from "@dnd-kit/core";
 import SortableTask from "./components/SortableTask";
 import { Status, Task, Priority, AppUser, UserRole } from "./utils/types";
@@ -22,8 +22,9 @@ import ProfileDialog from "./dialogs/ProfileDialog";
 import Header from "./components/Header";
 import ActiveFilters from "./components/ActiveFilters";
 import TaskBoard from "./components/TaskBoard";
-import { ExternalLink, Trash2, Plus, CalendarDays, Sun, Moon, Search, LogOut } from "lucide-react";
-import { HeaderBar, Toolbar } from "./components/HeaderBarAndToolbar";
+import { ExternalLink, Trash2, Plus, CalendarDays, Sun, Moon, Search, LogOut, Send, ArrowRight } from "lucide-react";
+import { HeaderBar } from "./components/HeaderBarAndToolbar";
+import Toolbar from "./components/Toolbar";
 import Button from "./components/Button";
 import PrimaryButton from "./components/PrimaryButton";
 import TableView from "./components/TableView";
@@ -44,6 +45,8 @@ export default function App() {
   });
   const [tasks, setTasks] = useState<Task[]>([]);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelTab, setPanelTab] = useState<'users' | 'date' | 'search' | null>(null);
   const [query, setQuery] = useState("");
   const [userFilter, setUserFilter] = useState<string[]>([]);
   const [sheetTask, setSheetTask] = useState<Task | null>(null);
@@ -182,16 +185,47 @@ export default function App() {
     if (!activeTask) return;
     const overId = over.id as string;
   const isColumn = (COLUMNS as any).some((c: any) => c.id === overId);
+    // Build column-wise task lists (excluding the active task) so we can insert
+    const colMap: Record<string, Task[]> = { todo: [], inprogress: [], blocker: [], done: [] } as any;
+    tasks.forEach((t) => {
+      const idKey = t._id || t.id;
+      if (idKey === (activeTask._id || activeTask.id)) return; // skip active
+      colMap[t.status || 'todo'].push(t);
+    });
+
     let destColumn: Status | null = null;
-    if (isColumn) destColumn = overId as Status;
-    else {
+    if (isColumn) {
+      destColumn = overId as Status;
+      // insert at end of that column — ensure we update the task's status in-memory
+      colMap[destColumn].push({ ...(activeTask as Task), status: destColumn });
+    } else {
+      // Dropped over another task — insert before that task in its column
       const overTask = tasks.find((t) => (t._id || t.id) === overId);
       destColumn = (overTask?.status || activeTask.status) as Status;
+      const list = colMap[destColumn] || [];
+      const insertIndex = list.findIndex((t) => (t._id || t.id) === (overTask?._id || overTask?.id));
+      if (insertIndex === -1) {
+        // not found (rare) — append
+        list.push({ ...(activeTask as Task), status: destColumn });
+      } else {
+        list.splice(insertIndex, 0, { ...(activeTask as Task), status: destColumn });
+      }
+      colMap[destColumn] = list;
     }
+
+    // Reconstruct tasks array preserving column order
+    const newTasks: Task[] = [];
+    (COLUMNS as any).forEach((c: any) => {
+      const key = c.id as Status;
+      newTasks.push(...(colMap[key] || []));
+    });
+
+    setTasks(newTasks as Task[]);
+
+    // If status changed, persist to backend
     if (destColumn && activeTask.status !== destColumn) {
       const updateId = activeTask._id || activeTask.id;
       if (!updateId) return;
-      setTasks((prev) => prev.map((t) => ((t._id || t.id) === updateId ? { ...t, status: destColumn } : t)));
       try {
         const updated = { ...activeTask, status: destColumn };
         const savedTask = await updateTask(updateId, updated);
@@ -242,7 +276,8 @@ export default function App() {
   return (
     <div className={`${dark ? "dark" : ""}`}> 
 
-  <HeaderBar
+  <div className="bg-gradient-to-b from-zinc-100 to-zinc-200 p-2 sm:p-4 md:p-6 dark:from-zinc-950 dark:to-zinc-900">
+    <HeaderBar
         user={user}
         setAdminPanelOpen={setAdminPanelOpen}
         adminPanelOpen={adminPanelOpen}
@@ -250,8 +285,19 @@ export default function App() {
         profileOpen={profileOpen}
         setUser={setUser}
         setTasks={setTasks}
+        panelOpen={panelOpen}
+        setPanelOpen={setPanelOpen}
+        panelTab={panelTab}
+        setPanelTab={setPanelTab}
+        users={users}
+        userFilter={userFilter}
+        setUserFilter={setUserFilter}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        dark={dark}
+        setDark={setDark}
       />
-  <div className="min-h-screen pt-20 sm:pt-24 bg-gradient-to-b from-zinc-100 to-zinc-200 p-2 sm:p-4 md:p-6 dark:from-zinc-950 dark:to-zinc-900 overflow-x-hidden">
+  <div className="min-h-screen pt-4 sm:pt-6 overflow-x-hidden">
         <div className="mx-auto max-w-7xl h-full flex flex-col"> 
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             {/* Logo and user info are now in the floating header, so this is empty for layout spacing */}
@@ -267,6 +313,8 @@ export default function App() {
               setAddOpen={setAddOpen}
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
+              setPanelOpen={setPanelOpen}
+              setPanelTab={setPanelTab}
             />
 
 
@@ -327,7 +375,7 @@ export default function App() {
             </div>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 flex-1 overflow-x-auto pb-4"> 
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 flex-1 overflow-x-auto pb-4 px-4 sm:px-0"> 
                 {filteredColumns.map((col: any) => ( 
                   <div key={col.id} className="flex flex-col min-w-[280px] sm:min-w-0"> 
                     <Column 
@@ -365,9 +413,9 @@ export default function App() {
 
           <Dialog open={!!sheetTask} onClose={() => setSheetTask(null)} title={sheetTask?.name || "Edit Task"}>
             {sheetTask && (
-              <form className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
+              <form className="space-y-2 min-w-0 p-0 sm:p-1">
+                <div className="grid grid-cols-2 gap-3 min-w-0 items-start">
+                  <div className="flex flex-col">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Status</div>
                     <div className="mt-1">
                       <select
@@ -377,7 +425,7 @@ export default function App() {
                           setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, status } : t)));
                           setSheetTask((s: any) => ({ ...s, status }));
                         }}
-                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100"
+                        className="w-full rounded-xl border border-zinc-300 bg-white px-2 py-1 text-xs sm:text-sm sm:px-3 sm:py-2 outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100"
                       >
                         <option value="todo">Not Started</option>
                         <option value="inprogress">In Progress</option>
@@ -386,7 +434,7 @@ export default function App() {
                       </select>
                     </div>
                   </div>
-                  <div>
+                  <div className="flex flex-col">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Priority</div>
                     <div className="mt-1">
                       <select
@@ -396,7 +444,7 @@ export default function App() {
                           setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, priority } : t)));
                           setSheetTask((s: any) => ({ ...s, priority }));
                         }}
-                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100"
+                        className="w-full rounded-xl border border-zinc-300 bg-white px-2 py-1 text-xs sm:text-sm sm:px-3 sm:py-2 outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100"
                       >
                         <option>Low</option>
                         <option>Medium</option>
@@ -406,41 +454,41 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
+                <div className="grid grid-cols-2 gap-3 min-w-0 items-start">
+                  <div className="flex flex-col">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Owner</div>
-                    <Input value={sheetTask.owner || ""} onChange={(e: any) => {
-                      const owner = e.target.value;
-                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, owner } : t)));
-                      setSheetTask((s: any) => ({ ...s, owner }));
-                    }} />
+                    <div className="mt-1">
+                      <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2" value={sheetTask.owner || ""} onChange={(e: any) => {
+                        const owner = e.target.value;
+                        setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, owner } : t)));
+                        setSheetTask((s: any) => ({ ...s, owner }));
+                      }} />
+                    </div>
                   </div>
-                  <div>
+                  <div className="flex flex-col">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Jira Issue Key</div>
-                    <Input value={sheetTask.jiraKey || ""} onChange={(e: any) => {
-                      const jiraKey = e.target.value.toUpperCase();
-                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, jiraKey } : t)));
-                      setSheetTask((s: any) => ({ ...s, jiraKey }));
-                    }} placeholder="e.g., ABC-123" />
+                    <div className="mt-1">
+                      <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2" value={sheetTask.jiraKey || ""} onChange={(e: any) => {
+                        const jiraKey = e.target.value.toUpperCase();
+                        setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, jiraKey } : t)));
+                        setSheetTask((s: any) => ({ ...s, jiraKey }));
+                      }} placeholder="e.g., ABC-123" />
+                    </div>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Start</div>
-                    <Input type="date" value={sheetTask.startDate || ""} onChange={(e: any) => {
-                      const startDate = e.target.value;
-                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, startDate } : t)));
-                      setSheetTask((s: any) => ({ ...s, startDate }));
-                    }} />
-                  </div>
-                  <div>
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">End</div>
-                    <Input type="date" value={sheetTask.endDate || ""} onChange={(e: any) => {
-                      const endDate = e.target.value;
-                      setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, endDate } : t)));
-                      setSheetTask((s: any) => ({ ...s, endDate }));
-                    }} />
+                  <div className="flex flex-col">
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Start — End</div>
+                    <div className="mt-1 flex flex-row gap-2">
+                      <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2 flex-1" type="date" value={sheetTask.startDate || ""} onChange={(e: any) => {
+                        const startDate = e.target.value;
+                        setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, startDate } : t)));
+                        setSheetTask((s: any) => ({ ...s, startDate }));
+                      }} />
+                      <Input className="text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-2 flex-1" type="date" value={sheetTask.endDate || ""} onChange={(e: any) => {
+                        const endDate = e.target.value;
+                        setTasks((prev) => prev.map((t) => ((t._id || t.id) === (sheetTask._id || sheetTask.id) ? { ...t, endDate } : t)));
+                        setSheetTask((s: any) => ({ ...s, endDate }));
+                      }} />
+                    </div>
                   </div>
                 </div>
 
@@ -453,15 +501,97 @@ export default function App() {
                   }} />
                 </div>
 
-                <div className="flex items-end justify-end gap-2">
-                  <PrimaryButton type="button" onClick={() => {
-                    setPendingTask(sheetTask);
-                    setConfirmType('save');
-                    setConfirmOpen(true);
-                  }}>Save Task</PrimaryButton>
+                {/* Comments & History */}
+                <div>
+                  <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Add comment</div>
+                  <div className="mt-2 relative">
+                    <Textarea
+                      placeholder="Write a comment..."
+                      className="w-full pr-12 py-1.5 text-zinc-900 placeholder-zinc-500"
+                      id="newCommentInput"
+                      rows={2}
+                      onKeyDown={async (e: any) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          const el: HTMLTextAreaElement | null = document.querySelector('#newCommentInput');
+                          if (!el) return;
+                          const text = el.value.trim();
+                          if (!text) return;
+                          try {
+                            const payload = { author: user?.displayName || user?.email || 'Anon', text };
+                            const newHistory = await addTaskComment(sheetTask._id || sheetTask.id, payload);
+                            const updated = { ...(sheetTask as any) };
+                            updated.history = [...(updated.history || []), { ...newHistory, createdAt: new Date(newHistory.createdAt).toISOString() }];
+                            setTasks((prev) => prev.map((t) => ((t._id || t.id) === (updated._id || updated.id) ? updated : t)));
+                            setSheetTask(updated);
+                            el.value = '';
+                          } catch (err) {
+                            console.error('Failed to post comment', err);
+                          }
+                        }
+                      }}
+                    />
+                    <Button
+                      stopPropagation={true}
+                      className="!rounded-none !bg-transparent !shadow-none !px-0 !py-0 !border-0 !border-transparent absolute right-2 top-1/2 -translate-y-1/2 text-indigo-600 hover:text-indigo-800 w-7 h-7 flex items-center justify-center focus:outline-none focus:ring-0 hover:!bg-transparent"
+                      title="Send comment"
+                      aria-label="Send comment"
+                      onClick={async (e: any) => {
+                        e.preventDefault();
+                        const el: HTMLTextAreaElement | null = document.querySelector('#newCommentInput');
+                        if (!el) return;
+                        const text = el.value.trim();
+                        if (!text) return;
+                        try {
+                          const payload = { author: user?.displayName || user?.email || 'Anon', text };
+                          const newHistory = await addTaskComment(sheetTask._id || sheetTask.id, payload);
+                          // refresh task locally: append history entry
+                          const updated = { ...(sheetTask as any) };
+                          updated.history = [...(updated.history || []), { ...newHistory, createdAt: new Date(newHistory.createdAt).toISOString() }];
+                          setTasks((prev) => prev.map((t) => ((t._id || t.id) === (updated._id || updated.id) ? updated : t)));
+                          setSheetTask(updated);
+                          el.value = '';
+                        } catch (err) {
+                          console.error('Failed to post comment', err);
+                        }
+                      }}
+                    >
+                      <ArrowRight className="h-5 w-5 text-indigo-600 dark:text-white" />
+                    </Button>
+                  </div>
+
+                  <div className="mt-1">
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">History</div>
+                    <div className="mt-2 space-y-2 max-h-16 overflow-auto history-scroll p-2 rounded-md bg-white/60 dark:bg-zinc-900/40 border border-zinc-200/40 dark:border-zinc-700/30 text-xs text-zinc-700 dark:text-zinc-300 shadow-sm flex-shrink-0" style={{backgroundClip: 'padding-box'}}>
+                      {(sheetTask.history || []).length === 0 && <div>No history yet</div>}
+                      {(sheetTask.history || []).map((h: any, i: number) => {
+                        // If this history entry is a comment, render as: Name (first) \n comment text \n timestamp
+                        if (h.action === 'comment') {
+                          const author = (h.by || h.author || 'Anon') as string;
+                          const firstName = author.split(' ').filter(Boolean)[0] || author;
+                          const commentText = h.to || h.text || '';
+                          const nextIsComment = (sheetTask.history || [])[i + 1]?.action === 'comment';
+                          return (
+                            <div key={i} className={`space-y-1 ${nextIsComment ? 'border-b border-zinc-200/30 dark:border-zinc-700/30 pb-2' : ''}`}>
+                              <div className="font-medium">{firstName}</div>
+                              <div className="text-zinc-700 dark:text-zinc-200 whitespace-pre-wrap">{commentText}</div>
+                              <div className="text-zinc-600 dark:text-zinc-400 text-xs">{new Date(h.createdAt).toLocaleString()}</div>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div key={i}>
+                            <div className="font-medium">{h.action}</div>
+                            <div className="text-zinc-500">{h.by} {h.from ? `: ${h.from} → ${h.to}` : h.to}</div>
+                            <div className="text-zinc-600 dark:text-zinc-400 text-xs">{new Date(h.createdAt).toLocaleString()}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex justify-between pt-2">
+                <div className="flex justify-between pt-2 pb-2">
                   <Button type="button" onClick={() => {
                     setPendingTask(sheetTask);
                     setConfirmType('delete');
@@ -470,6 +600,11 @@ export default function App() {
                     <Trash2 className="h-4 w-4" /> Delete task
                   </Button>
                   <Button onClick={() => setSheetTask(null)}>Close</Button>
+                  <PrimaryButton type="button" onClick={() => {
+                    setPendingTask(sheetTask);
+                    setConfirmType('save');
+                    setConfirmOpen(true);
+                  }}>Save Task</PrimaryButton>
                 </div>
               </form>
             )}
@@ -508,5 +643,6 @@ export default function App() {
         }}
       />
     </div>
+  </div>
   );
 }

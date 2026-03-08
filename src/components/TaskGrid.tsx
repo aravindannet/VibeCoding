@@ -67,25 +67,34 @@ const TaskGrid: React.FC<TaskGridProps> = ({ tasks, onInspect, onDelete }) => {
               )}
 
               {/* Dates and Priority */}
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <Badge className="border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600">
-                  Start: {task.startDate || "—"}
-                </Badge>
-                <Badge className="border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600">
-                  End: {task.endDate || "—"}
-                </Badge>
+              <div className="flex flex-col gap-2 text-xs">
+                {(task.startDate || task.endDate) ? (
+                  <div className="grid grid-cols-2 gap-2 w-full min-w-0">
+                    <Badge className="w-full border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600 justify-between min-w-0">
+                      <span className="truncate">Start: {task.startDate || "—"}</span>
+                    </Badge>
+                    <Badge className="w-full border-zinc-300 text-zinc-700 dark:text-zinc-300 dark:border-zinc-600 justify-between min-w-0">
+                      <span className="truncate">End: {task.endDate || "—"}</span>
+                    </Badge>
+                  </div>
+                ) : (
+                  <div className="text-zinc-400">—</div>
+                )}
+
                 {task.priority && (
-                  <Badge
-                    className={`border-transparent ${
-                      {
-                        High: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200",
-                        Medium: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200",
-                        Low: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200",
-                      }[task.priority]
-                    }`}
-                  >
-                    {task.priority}
-                  </Badge>
+                  <div>
+                    <Badge
+                      className={`border-transparent ${
+                        {
+                          High: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200",
+                          Medium: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200",
+                          Low: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200",
+                        }[task.priority]
+                      }`}
+                    >
+                      {task.priority}
+                    </Badge>
+                  </div>
                 )}
               </div>
 
